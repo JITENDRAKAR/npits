@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="card h-100 border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Invested Amount</div>
+                <h3 class="fw-bold mb-0">&#8377;{{ total_invested|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-start border-4 border-success">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Current Value</div>
+                <h3 class="fw-bold mb-0">&#8377;{{ total_current_value|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-start border-4 border-info">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Unrealized P&L</div>
+                <h3 class="fw-bold mb-0 {% if total_unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    &#8377;{{ total_unrealized_pnl|floatformat:2 }}
+                    <span class="ms-2" style="font-size: 0.9rem; vertical-align: middle;">
+                        ({{ total_unrealized_pnl_percent|floatformat:2 }}%)
+                    </span>
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100 border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase mb-1">Realized Profit</div>
+                <h3 class="fw-bold mb-0 text-success">&#8377;{{ total_realized_profit|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+                <div>
+                    <h5 class="mb-0 fw-bold">Upload portfolio and P&L
+                        {% if current_strategy %}
+                        <span class="badge bg-primary ms-2" style="font-size: 0.8rem; vertical-align: middle;">
+                            {% if current_strategy == 'flexi' %}FlexiMultiInvest
+                            {% elif current_strategy == 'quant' %}NiftyQuant
+                            {% elif current_strategy == 'pyramid' %}Pyramiding
+                            {% elif current_strategy == 'growth' %}ReinvestX (Growth)
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted small mb-0">Receive insights and recommendations</p>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small mb-1">
+                        <i class="fas fa-sync-alt fa-spin me-1"></i> Live Update
+                    </div>
+                    <div class="badge bg-light text-dark border fw-normal">
+                        Refreshed: {{ last_updated|date:"H:i:s" }}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <a href="{% url 'upload_portfolio' %}" class="btn btn-primary btn-sm rounded-pill">
+                        <i class="fas fa-plus me-2"></i>Add Portfolio (CSV/Excel)
+                    </a>
+                    <a href="{% url 'add_portfolio_item' %}" class="btn btn-success btn-sm rounded-pill">
+                        <i class="fas fa-keyboard me-2"></i>Add Portfolio Manually
+                    </a>
+                    <a href="{% url 'upload_pnl' %}" class="btn btn-primary btn-sm rounded-pill">
+                        <i class="fas fa-plus me-2"></i>Upload P&L
+                    </a>
+                    <a href="{% url 'transaction_history' %}" class="btn btn-outline-primary btn-sm rounded-pill">
+                        <i class="fas fa-history me-2"></i>Transaction History
+                    </a>
+
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm rounded-pill border dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-2"></i>Samples
+                        </button>
+                        <ul class="dropdown-menu shadow-sm border-0">
+                            <li class="dropdown-header">Portfolio Template</li>
+                            <li><a class="dropdown-item py-2" href="{% static 'samples/sample_portfolio.csv' %}"
+                                    download>CSV Format</a></li>
+                            <li><a class="dropdown-item py-2" href="{% static 'samples/sample_portfolio.xlsx' %}"
+                                    download>Excel Format</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li class="dropdown-header">P&L Template</li>
+                            <li><a class="dropdown-item py-2" href="{% static 'samples/sample_pnl.csv' %}" download>CSV
+                                    Format</a></li>
+                            <li><a class="dropdown-item py-2" href="{% static 'samples/sample_pnl.xlsx' %}"
+                                    download>Excel Format</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm rounded-pill border dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-signal me-2"></i>Signals
+                        </button>
+                        <ul class="dropdown-menu shadow-sm border-0">
+                            <li>
+                                <button class="dropdown-item py-2 d-flex justify-content-between align-items-center"
+                                    onclick="filterPortfolio('SELL');">
+                                    <span><i class="fas fa-arrow-trend-up text-danger me-2"></i>Sell Signals</span>
+                                    <span class="badge bg-danger rounded-pill">{{ sell_recommendations|length }}</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item py-2 d-flex justify-content-between align-items-center"
+                                    onclick="filterPortfolio('BUY');">
+                                    <span><i class="fas fa-cart-plus text-success me-2"></i>Buy Signals</span>
+                                    <span class="badge bg-success rounded-pill">{{ buy_recommendations|length }}</span>
+                                </button>
+                            </li>
+                            <li>
+                                <button class="dropdown-item py-2 d-flex justify-content-between align-items-center"
+                                    onclick="filterPortfolio('REDUCE');">
+                                    <span><i class="fas fa-arrow-trend-down text-warning me-2"></i>Reduce Signals</span>
+                                    <span class="badge bg-warning rounded-pill">{{ reduce_sigs|length }}</span>
+                                </button>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <button class="dropdown-item py-2" onclick="filterPortfolio('ALL');">
+                                    <i class="fas fa-list me-2"></i>All Portfolio
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h5 class="mb-4 fw-bold" id="portfolio-view-title">
+                    <i class="fas fa-list me-2"></i>Portfolio Recommendations
+                </h5>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle border-top portfolio-table" id="portfolioTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 text-uppercase small fw-bold text-muted">Buy/Sell</th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="instrument">Instrument <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="qty">Qty <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="avg_cost">Avg Cost <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="ltp">LTP <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="invested">Invested <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="current">Current <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="unrealized_pnl">P&L <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="pnl">P&L % <i class="fas fa-sort ms-1"></i></th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted text-center"
+                                    style="cursor: pointer;" data-sort="action">Input <i class="fas fa-sort ms-1"></i>
+                                </th>
+                                <th class="border-0 text-uppercase small fw-bold text-muted" style="cursor: pointer;"
+                                    data-sort="reason">Reason <i class="fas fa-sort ms-1"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in recommendations %}
+                            <tr data-action="{{ item.action }}" data-pnl="{{ item.unrealized_pnl }}"
+                                data-buy-gap="{{ item.buy_gap }}" data-reduce-gap="{{ item.reduce_gap }}"
+                                data-in-portfolio="{{ item.in_portfolio|yesno:'true,false' }}">
+                                <td>
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <button type="button"
+                                            class="btn btn-sm btn-success-subtle border-success-subtle text-success"
+                                            title="Buy"
+                                            onclick="openBuyModal('{{ item.symbol }}', '{{ item.ltp }}', {{ item.invested_amount }})">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                        {% if item.in_portfolio %}
+                                        <button type="button"
+                                            class="btn btn-sm btn-danger-subtle border-danger-subtle text-danger"
+                                            title="Sell"
+                                            onclick="openSellModal('{{ item.symbol }}', '{{ item.quantity }}', '{{ item.ltp }}')">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="fw-bold">
+                                    <span title="{{ item.symbol }}">{{ item.name }}</span>
+                                    {% if item.in_portfolio %}
+                                    <a href="{% url 'lot_breakdown' item.instrument_id %}"
+                                        class="text-primary ms-1 small" title="Lot Breakdown"><i
+                                            class="fas fa-layer-group"></i></a>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>&#8377;{{ item.avg_cost|floatformat:2 }}</td>
+                                <td class="fw-semibold">&#8377;{{ item.ltp|floatformat:2 }}</td>
+                                <td>&#8377;{{ item.invested_amount|floatformat:2 }}</td>
+                                <td>&#8377;{{ item.current_value|floatformat:2 }}</td>
+                                <td
+                                    class="fw-bold {% if item.unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    &#8377;{{ item.unrealized_pnl|floatformat:2 }}</td>
+                                <td
+                                    class="fw-bold {% if item.pnl_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ item.pnl_percent|floatformat:2 }}%</td>
+                                <td class="text-center">
+                                    <span
+                                        class="badge px-3 py-2 rounded-pill {% if item.action == 'SELL' %}bg-danger-subtle text-danger border border-danger-subtle{% elif item.action == 'BUY' %}bg-success-subtle text-success border border-success-subtle{% elif item.action == 'REDUCE' %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-light text-dark border{% endif %}"
+                                        title="{% if item.action == 'BUY' %}Profit, P/E, and 52-week high gap are favorable, invest up to target capital.{% elif item.action == 'REDUCE' %}Investment high; reduce to target capital when possible.{% elif item.action == 'HOLD' %}No action required.{% elif item.action == 'SELL' %}22% profit target achieved.{% endif %}">
+                                        {{ item.action }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ item.reason }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="11" class="text-center py-5 text-muted">No stocks found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <div class="card-footer bg-white text-center py-3 border-top">
+            <p class="text-muted small mb-0">For any support, please contact <a href="mailto:netprofit.i.t.s@gmail.com "
+                    class="text-decoration-none">info@npits.in</a></p>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Buy/Sell Modals -->
+<div class="modal fade" id="transactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Buy Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="transactionForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="symbol" id="modalSymbol">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Stock Symbol</label>
+                        <input type="text" class="form-control fw-bold" id="displaySymbol" disabled>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Quantity</label>
+                            <input type="number" name="quantity" id="modalQty" class="form-control" required min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Price</label>
+                            <input type="number" step="0.01" name="price" id="modalPrice" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted" id="modalDateLabel">Date</label>
+                        <input type="date" name="date" id="modalDate" class="form-control" value="{% now 'Y-m-d' %}">
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4"
+                        data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4" id="modalSubmitBtn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Placeholder -->
+<div class="row mt-4 mb-4 justify-content-center align-items-center w-100 m-0">
+    <div class="col-12 col-md-6 d-flex justify-content-center">
+        <div class="card p-3 w-100">
+            <canvas id="allocationChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Invest Minimum Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    <div id="investMinToast" class="toast align-items-center text-bg-warning border-0 shadow-lg" role="alert"
+        aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold">
+                <i class="fas fa-info-circle me-2"></i>
+                Please invest at least &#8377;5,000.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Placeholder chart logic - popuate with real data in Views
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    const allocationChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for item in recommendations %}'{{ item.symbol }}',{% endfor %}],
+    datasets: [{
+        data: [{% for item in recommendations %}{{ item.current_value }}, {% endfor %}],
+        backgroundColor: [
+            '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'
+        ],
+            }]
+        },
+    options: {
+        responsive: true,
+            plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Portfolio Allocation' }
+        }
+    }
+    });
+
+    // Auto-refresh the page every 10 minutes (600,000 ms)
+    setTimeout(function () {
+        location.reload();
+    }, 600000);
+
+    function openBuyModal(symbol, ltp, investedAmount) {
+        const MIN_INVEST = 5000;
+        // If investedAmount is provided and is 0 (stock not in portfolio), show the minimum investment message
+        if (typeof investedAmount !== 'undefined' && parseFloat(investedAmount) <= 0) {
+            const toastEl = document.getElementById('investMinToast');
+            if (toastEl) {
+                const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+                toast.show();
+            }
+            // Still allow the modal to open so user can buy
+        }
+        document.getElementById('modalTitle').innerText = 'Buy ' + symbol;
+        document.getElementById('modalSymbol').value = symbol;
+        document.getElementById('displaySymbol').value = symbol;
+        document.getElementById('modalPrice').value = ltp;
+        document.getElementById('modalQty').value = '';
+        document.getElementById('modalDateLabel').innerText = 'Purchase Date';
+        document.getElementById('modalDate').name = 'date';
+        document.getElementById('transactionForm').action = "{% url 'buy_stock' %}";
+        document.getElementById('modalSubmitBtn').className = 'btn btn-success rounded-pill px-4';
+        document.getElementById('modalSubmitBtn').innerText = 'Confirm Buy';
+        new bootstrap.Modal(document.getElementById('transactionModal')).show();
+    }
+
+    function openSellModal(symbol, qty, ltp) {
+        document.getElementById('modalTitle').innerText = 'Sell ' + symbol;
+        document.getElementById('modalSymbol').value = symbol;
+        document.getElementById('displaySymbol').value = symbol;
+        document.getElementById('modalPrice').value = ltp;
+        document.getElementById('modalQty').value = qty;
+        document.getElementById('modalQty').max = qty;
+        document.getElementById('modalDateLabel').innerText = 'Exit Date';
+        document.getElementById('modalDate').name = 'exit_date';
+        document.getElementById('transactionForm').action = "{% url 'sell_stock' %}";
+        document.getElementById('modalSubmitBtn').className = 'btn btn-danger rounded-pill px-4';
+        document.getElementById('modalSubmitBtn').innerText = 'Confirm Sell';
+        new bootstrap.Modal(document.getElementById('transactionModal')).show();
+    }
+
+    function filterPortfolio(action) {
+        const table = document.getElementById('portfolioTable');
+        const viewTitle = document.getElementById('portfolio-view-title');
+
+        if (!table) return;
+
+        if (action === 'ALL') {
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            rows.forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
+                row.style.display = row.dataset.inPortfolio === 'true' ? '' : 'none';
+            });
+            viewTitle.innerHTML = '<i class="fas fa-list me-2"></i>My Portfolio';
+            return;
+        }
+
+        // Update Title
+        let icon = 'fas fa-arrow-trend-up text-danger';
+        let label = 'Sell Signals';
+        if (action === 'BUY') { icon = 'fas fa-cart-plus text-success'; label = 'Buy Signals'; }
+        if (action === 'REDUCE') { icon = 'fas fa-arrow-trend-down text-warning'; label = 'Reduce Signals'; }
+        viewTitle.innerHTML = `<i class="${icon} me-2"></i>${label}`;
+
+        // Filter & Sort
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        const filteredRows = rows.filter(row => {
+            if (row.querySelector('td[colspan]')) return false;
+            const rowAction = row.dataset.action;
+            const show = rowAction === action;
+            row.style.display = show ? '' : 'none';
+            return show;
+        });
+
+        filteredRows.sort((a, b) => {
+            let valA, valB;
+            if (action === 'SELL') {
+                valA = parseFloat(a.dataset.pnl) || 0;
+                valB = parseFloat(b.dataset.pnl) || 0;
+            } else if (action === 'BUY') {
+                valA = parseFloat(a.dataset.buyGap) || 0;
+                valB = parseFloat(b.dataset.buyGap) || 0;
+            } else if (action === 'REDUCE') {
+                valA = parseFloat(a.dataset.reduceGap) || 0;
+                valB = parseFloat(b.dataset.reduceGap) || 0;
+            }
+            return valB - valA;
+        });
+
+        const otherRows = rows.filter(row => row.style.display === 'none');
+        const emptyRow = rows.find(row => row.querySelector('td[colspan]'));
+
+        tbody.innerHTML = '';
+        filteredRows.forEach(row => tbody.appendChild(row));
+        otherRows.forEach(row => tbody.appendChild(row));
+        if (emptyRow) tbody.appendChild(emptyRow);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initial filter to show only portfolio items
+        filterPortfolio('ALL');
+
+        const tables = document.querySelectorAll('.table');
+
+        tables.forEach(table => {
+            const headers = table.querySelectorAll('th[data-sort]');
+            const tbody = table.querySelector('tbody');
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortType = header.dataset.sort;
+                    const direction = header.classList.contains('asc') ? 'desc' : 'asc';
+
+                    // Reset all headers in THIS table
+                    headers.forEach(h => {
+                        h.classList.remove('asc', 'desc');
+                        h.querySelector('i').className = 'fas fa-sort ms-1 text-muted opacity-50';
+                    });
+
+                    // Update current header
+                    header.classList.add(direction);
+                    header.querySelector('i').className = `fas fa-sort-${direction === 'asc' ? 'up' : 'down'} ms-1 text-primary`;
+
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                    // Filter out empty state row if present
+                    const dataRows = rows.filter(row => !row.querySelector('td[colspan]'));
+                    const emptyRow = rows.find(row => row.querySelector('td[colspan]'));
+
+                    const sortedRows = dataRows.sort((a, b) => {
+                        let aVal = getCellValue(a, sortType, table);
+                        let bVal = getCellValue(b, sortType, table);
+
+                        if (!isNaN(aVal) && !isNaN(bVal)) {
+                            return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                        }
+                        return direction === 'asc' ? aVal.toString().localeCompare(bVal.toString()) : bVal.toString().localeCompare(aVal.toString());
+                    });
+
+                    // Reorder DOM
+                    tbody.innerHTML = '';
+                    sortedRows.forEach(row => tbody.appendChild(row));
+                    if (emptyRow) tbody.appendChild(emptyRow);
+                });
+            });
+        });
+
+        function getCellValue(row, type, table) {
+            const headers = Array.from(table.querySelectorAll('thead th'));
+            const index = headers.findIndex(h => h.dataset.sort === type);
+
+            if (index === -1) return '';
+
+            const cell = row.children[index];
+            if (!cell) return '';
+
+            let text = cell.textContent.trim();
+
+            // Handle numeric values with symbols
+            const numericTypes = ['qty', 'avg_cost', 'ltp', 'invested', 'current', 'unrealized_pnl', 'pnl', 'invested_amount', 'current_value'];
+            if (numericTypes.includes(type) || text.includes('&#8377;') || text.includes('%')) {
+                // Remove &#8377;, %, and commas
+                text = text.replace(/&#8377;/g, '').replace(/[%,]/g, '');
+                return parseFloat(text) || 0;
+            }
+
+            return text;
+        }
+    });
+</script>
+{% endblock %}

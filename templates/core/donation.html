@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <i class="fas fa-heart fa-4x text-danger mb-4"></i>
+            <h1 class="display-4 fw-bold mb-3">Support NPITS</h1>
+            <p class="lead text-muted">Your support enables us to sustain and continuously enhance our rule-based investment tracking system for the benefit of all users.
+
+If you would like to contribute, please email us at netprofit.i.t.s@gmail.com
+ for donation details and further instructions..</p>
+            <hr class="my-5">
+            <a href="{% url 'landing' %}" class="btn btn-primary rounded-pill px-4">Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

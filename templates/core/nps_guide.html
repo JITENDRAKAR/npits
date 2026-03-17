@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .guide-hero {
+        background: linear-gradient(135deg, #ef4444, #991b1b);
+        color: white;
+        padding: 80px 0;
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 50px;
+        text-align: center;
+    }
+
+    .guide-section {
+        margin-bottom: 60px;
+    }
+
+    .section-header {
+        margin-bottom: 30px;
+        border-left: 5px solid #ef4444;
+        padding-left: 20px;
+    }
+
+    .section-title {
+        color: #1e293b;
+        font-weight: 800;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .card-guide {
+        border: none;
+        border-radius: 24px;
+        background: #fff;
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .card-guide:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(239, 68, 68, 0.1);
+    }
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 25px;
+    }
+
+    .list-custom {
+        list-style: none;
+        padding: 0;
+    }
+
+    .list-custom li {
+        padding-left: 35px;
+        position: relative;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    .list-custom li::before {
+        content: "\f058";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-size: 1.2rem;
+    }
+
+    .nps-box {
+        background: #fef2f2;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border: 1px solid #fecaca;
+    }
+
+    .nps-icon {
+        width: 45px;
+        height: 45px;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .badge-who {
+        background: #ef4444;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 50px;
+        font-weight: 700;
+        display: inline-block;
+        margin: 10px;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    .text-danger-custom::before {
+        color: #ef4444 !important;
+        content: "\f057" !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="guide-hero">
+    <div class="container">
+        <i class="fas fa-university fa-4x mb-4"></i>
+        <h1 class="display-3 fw-800 mb-3">NPS Guide</h1>
+        <p class="lead text-white-50 fs-4 mx-auto" style="max-width: 800px;">
+            The National Pension System (NPS) for long-term retirement planning.
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto text-center">
+            <p class="fs-5 text-muted leading-relaxed">
+                NPS is a government-regulated retirement savings scheme designed for long-term financial security. It
+                offers a combination of equity, corporate debt, and government securities to build a substantial
+                retirement corpus.
+            </p>
+        </div>
+    </div>
+
+    <!-- How it Works -->
+    <div class="guide-section">
+        <div class="section-header">
+            <h2 class="section-title">How NPS Works</h2>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="nps-box">
+                    <div class="nps-icon"><i class="fas fa-user-edit"></i></div>
+                    <span class="fw-bold">Individuals contribute regularly</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="nps-box">
+                    <div class="nps-icon"><i class="fas fa-chart-pie"></i></div>
+                    <span class="fw-bold">Funds invested in equity, bonds, Govt securities</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="nps-box">
+                    <div class="nps-icon"><i class="fas fa-user-tie"></i></div>
+                    <span class="fw-bold">Managed by professional pension managers</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="nps-box">
+                    <div class="nps-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                    <span class="fw-bold">Partial withdrawals allowed for specific needs</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="nps-box">
+                    <div class="nps-icon"><i class="fas fa-file-signature"></i></div>
+                    <span class="fw-bold">Corpus used to purchase annuity at retirement</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Types -->
+    <div class="guide-section">
+        <div class="section-header">
+            <h2 class="section-title">Account Types</h2>
+        </div>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-5">
+                <div class="card card-guide">
+                    <div class="icon-box">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4 class="fw-bold">Tier I</h4>
+                    <p class="text-muted">Retirement-focused account with restricted withdrawals and maximum tax
+                        benefits.</p>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="card card-guide">
+                    <div class="icon-box">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h4 class="fw-bold">Tier II</h4>
+                    <p class="text-muted">Voluntary savings account with flexible withdrawals (requires an active Tier I
+                        account).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advantages & Disadvantages -->
+    <div class="row guide-section g-5">
+        <div class="col-md-6">
+            <div class="card card-guide h-100">
+                <div class="section-header border-success">
+                    <h2 class="section-title text-success">Advantages</h2>
+                </div>
+                <ul class="list-custom">
+                    <li>Attractive tax benefits</li>
+                    <li>Low fund management cost</li>
+                    <li>Long-term compounding advantage</li>
+                    <li>Regulated and transparent</li>
+                    <li>Flexible asset allocation options</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-guide h-100">
+                <div class="section-header border-danger">
+                    <h2 class="section-title text-danger">Disadvantages</h2>
+                </div>
+                <ul class="list-custom">
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Mandatory annuity purchase at
+                        retirement</li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Limited liquidity (Tier I
+                        restrictions)</li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Market-linked returns (not
+                        guaranteed)</li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Long lock-in period</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Who Should Consider -->
+    <div class="guide-section text-center py-5"
+        style="background: #fef2f2; border-radius: 40px; border: 1px solid #fecaca;">
+        <h2 class="fw-800 mb-4">Who Should Consider NPS?</h2>
+        <div class="d-flex flex-wrap justify-content-center">
+            <span class="badge-who">Salaried professionals</span>
+            <span class="badge-who">Long-term retirement planners</span>
+            <span class="badge-who">Tax-saving investors</span>
+            <span class="badge-who">Disciplined corpus builders</span>
+        </div>
+    </div>
+
+    <div class="text-center py-5">
+        <a href="{% url 'landing' %}" class="btn btn-outline-danger rounded-pill px-5 btn-lg fw-bold">
+            <i class="fas fa-arrow-left me-2"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .autocomplete-results {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ddd;
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .autocomplete-item {
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    .autocomplete-item:hover {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Autocomplete script loaded');
+        const companyInput = document.getElementById('id_company_name');
+        const symbolInput = document.getElementById('id_symbol');
+        const resultsDiv = document.getElementById('autocomplete-results');
+
+        if (!companyInput || !resultsDiv) {
+            console.error('Autocomplete elements not found');
+            return;
+        }
+
+        companyInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            console.log('Searching for:', query);
+            if (query.length < 2) {
+                resultsDiv.classList.add('d-none');
+                return;
+            }
+
+            fetch(`/search-instruments/?q=${encodeURIComponent(query)}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Results found:', data.length);
+                    resultsDiv.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'autocomplete-item';
+                            div.innerHTML = `<strong>${item.name}</strong> <span class="text-muted small">(${item.symbol})</span>`;
+                            div.addEventListener('click', () => {
+                                console.log('Selected:', item.symbol);
+                                companyInput.value = item.name;
+                                symbolInput.value = item.symbol;
+                                const avgCostInput = document.getElementById('id_avg_cost');
+                                if (avgCostInput && item.ltp) {
+                                    avgCostInput.value = item.ltp;
+                                }
+                                resultsDiv.classList.add('d-none');
+                            });
+                            resultsDiv.appendChild(div);
+                        });
+                        resultsDiv.classList.remove('d-none');
+                    } else {
+                        resultsDiv.classList.add('d-none');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching instruments:', err);
+                });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (e.target !== companyInput && e.target !== resultsDiv) {
+                resultsDiv.classList.add('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Stock Manually</h5>
+                <p class="text-muted small mb-0">Enter the stock details to add to your portfolio</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-4 position-relative">
+                        <label for="{{ form.company_name.id_for_label }}"
+                            class="form-label fw-semibold small text-uppercase">Company Name</label>
+                        {{ form.company_name }}
+                        <div id="autocomplete-results" class="autocomplete-results d-none"></div>
+                        <div class="form-text small">Search by company name or NSE/BSE code.</div>
+                        {% if form.company_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.company_name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.symbol.id_for_label }}"
+                            class="form-label fw-semibold small text-uppercase text-muted">Stock Symbol
+                            (Auto-filled)</label>
+                        {{ form.symbol }}
+                        {% if form.symbol.errors %}
+                        <div class="text-danger small mt-1">{{ form.symbol.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.quantity.id_for_label }}"
+                                class="form-label fw-semibold small text-uppercase">Quantity</label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                            <div class="text-danger small mt-1">{{ form.quantity.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.avg_cost.id_for_label }}"
+                                class="form-label fw-semibold small text-uppercase">Average Cost (₹)</label>
+                            {{ form.avg_cost }}
+                            {% if form.avg_cost.errors %}
+                            <div class="text-danger small mt-1">{{ form.avg_cost.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.date.id_for_label }}"
+                            class="form-label fw-semibold small text-uppercase">Purchase Date</label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                        <div class="text-danger small mt-1">{{ form.date.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary py-2 fw-bold">
+                            <i class="fas fa-save me-2"></i>Save to Portfolio
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-light py-2 border">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light p-3 text-center">
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Adding an existing stock will update its quantity and average cost.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPITS Signal Alert</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .header {
+            background-color: #003D7C;
+            color: #ffffff;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #444444;
+        }
+        .alert-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .alert-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .alert-row:last-child {
+            border-bottom: none;
+        }
+        .alert-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #555555;
+        }
+        .count-badge {
+            font-size: 18px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: #ffffff;
+        }
+        .buy-badge { background-color: #008D4C; }
+        .reduce-badge { background-color: #fd7e14; }
+        .sell-badge { background-color: #D62A2D; }
+        .total-badge { 
+            background-color: #003D7C; 
+            font-size: 20px;
+            padding: 6px 16px;
+        }
+        .cta-button {
+            display: block;
+            width: 200px;
+            margin: 0 auto;
+            background-color: #008D4C;
+            color: #ffffff;
+            text-align: center;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888888;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NPITS Signal Alert</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hi <strong>{{ user.profile.full_name|default:user.username }}</strong>,</p>
+            <p>There has been a change in your portfolio recommendations. Here is the latest summary of investment signals based on your current holdings:</p>
+            
+            <div class="alert-box">
+                <div class="alert-row">
+                    <span class="alert-label">Buy Signals</span>
+                    <span class="count-badge buy-badge">{{ buy_count }}</span>
+                </div>
+                <div class="alert-row">
+                    <span class="alert-label">Reduce Signals</span>
+                    <span class="count-badge reduce-badge">{{ reduce_count }}</span>
+                </div>
+                <div class="alert-row">
+                    <span class="alert-label">Sell Signals</span>
+                    <span class="count-badge sell-badge">{{ sell_count }}</span>
+                </div>
+                <div class="alert-row" style="margin-top: 10px; border-top: 2px solid #dde2e6; border-bottom: none; padding-bottom: 0;">
+                    <span class="alert-label" style="font-size: 18px; color: #333;">Total Signals</span>
+                    <span class="count-badge total-badge">{{ total_count }}</span>
+                </div>
+            </div>
+            
+            <p>Please log in to your dashboard to review these recommendations and take appropriate actions.</p>
+            
+            <a href="{{ site_url }}/dashboard/" class="cta-button">View Dashboard</a>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2026 NPITS - Net Profit Investment Tracking System</p>
+            <p>Rule-based investing for disciplined wealth creation.</p>
+            <p><small>You are receiving this email because you opted into signal alerts.</small></p>
+        </div>
+    </div>
+</body>
+</html>

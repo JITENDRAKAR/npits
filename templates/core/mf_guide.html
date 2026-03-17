@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .guide-hero {
+        background: linear-gradient(135deg, var(--primary-color), #003d7c);
+        color: white;
+        padding: 80px 0;
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 50px;
+        text-align: center;
+    }
+
+    .guide-section {
+        margin-bottom: 60px;
+    }
+
+    .section-header {
+        margin-bottom: 30px;
+        border-left: 5px solid var(--primary-color);
+        padding-left: 20px;
+    }
+
+    .section-title {
+        color: #1e293b;
+        font-weight: 800;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .card-guide {
+        border: none;
+        border-radius: 24px;
+        background: #fff;
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .card-guide:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(0, 61, 124, 0.1);
+    }
+
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        background: rgba(0, 86, 179, 0.1);
+        color: var(--primary-color);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 25px;
+    }
+
+    .list-custom {
+        list-style: none;
+        padding: 0;
+    }
+
+    .list-custom li {
+        padding-left: 35px;
+        position: relative;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: #475569;
+        line-height: 1.6;
+    }
+
+    .list-custom li::before {
+        content: "\f058";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        color: #10b981;
+        font-size: 1.2rem;
+    }
+
+    .step-box {
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .step-number {
+        width: 45px;
+        height: 45px;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
+
+    .badge-who {
+        background: var(--primary-color);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 50px;
+        font-weight: 700;
+        display: inline-block;
+        margin: 10px;
+        box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
+    }
+
+    .text-danger-custom::before {
+        color: #ef4444 !important;
+        content: "\f057" !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="guide-hero">
+    <div class="container">
+        <i class="fas fa-book-open fa-4x mb-4"></i>
+        <h1 class="display-3 fw-800 mb-3">Mutual Fund Guide</h1>
+        <p class="lead text-white-50 fs-4 mx-auto" style="max-width: 800px;">
+            A complete guide to understanding, evaluating, and investing in Mutual Funds.
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto text-center">
+            <p class="fs-5 text-muted leading-relaxed">
+                Mutual Funds pool money from multiple investors and invest in diversified assets such as equities,
+                bonds, or a mix of both. They are managed by professional fund managers and are suitable for investors
+                seeking diversification without actively managing individual securities.
+            </p>
+        </div>
+    </div>
+
+    <!-- How it Works -->
+    <div class="guide-section">
+        <div class="section-header">
+            <h2 class="section-title">How Mutual Funds Work</h2>
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="step-box">
+                    <div class="step-number">1</div>
+                    <span class="fw-bold">Investors contribute money to a pooled fund</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-box">
+                    <div class="step-number">2</div>
+                    <span class="fw-bold">A professional fund manager invests according to objective</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-box">
+                    <div class="step-number">3</div>
+                    <span class="fw-bold">Returns are distributed proportionately based on units</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-box">
+                    <div class="step-number">4</div>
+                    <span class="fw-bold">NAV (Net Asset Value) reflects daily fund value</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Types -->
+    <div class="guide-section">
+        <div class="section-header">
+            <h2 class="section-title">Types of Mutual Funds</h2>
+        </div>
+        <div class="row g-4 text-center">
+            <div class="col-md-4 col-lg-2">
+                <div class="card card-guide py-4">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="fw-bold small">Equity Funds</h5>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card card-guide py-4">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-piggy-bank"></i>
+                    </div>
+                    <h5 class="fw-bold small">Debt Funds</h5>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card card-guide py-4">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <h5 class="fw-bold small">Hybrid Funds</h5>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card card-guide py-4">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-list-ol"></i>
+                    </div>
+                    <h5 class="fw-bold small">Index Funds</h5>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card card-guide py-4">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h5 class="fw-bold small">Sectoral Funds</h5>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card card-guide py-4">
+                    <div class="icon-box mx-auto">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <h5 class="fw-bold small">International Funds</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advantages & Disadvantages -->
+    <div class="row guide-section g-5">
+        <div class="col-md-6">
+            <div class="card card-guide h-100">
+                <div class="section-header border-success">
+                    <h2 class="section-title text-success">Advantages</h2>
+                </div>
+                <ul class="list-custom">
+                    <li>Professional management</li>
+                    <li>Diversification reduces risk</li>
+                    <li>Accessible with small investments (via SIP)</li>
+                    <li>Suitable for long-term wealth building</li>
+                    <li>Regulated and transparent structure</li>
+                    <li>Ideal for goal-based investing</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-guide h-100">
+                <div class="section-header border-danger">
+                    <h2 class="section-title text-danger">Disadvantages</h2>
+                </div>
+                <ul class="list-custom">
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Expense ratios reduce net returns
+                    </li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">No guaranteed returns</li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Market risk in equity-oriented
+                        funds</li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Fund manager performance risk</li>
+                    <li class="text-danger-custom" style="color: #ef4444 !important;">Exit loads in some schemes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Who Should Invest -->
+    <div class="guide-section text-center py-5" style="background: #f1f5f9; border-radius: 40px;">
+        <h2 class="fw-800 mb-4">Who Should Invest?</h2>
+        <div class="d-flex flex-wrap justify-content-center">
+            <span class="badge-who">Beginners</span>
+            <span class="badge-who">Long-term investors</span>
+            <span class="badge-who">Passive wealth accumulation</span>
+            <span class="badge-who">Investors without time to track</span>
+        </div>
+    </div>
+
+    <div class="text-center py-5">
+        <a href="{% url 'landing' %}" class="btn btn-outline-primary rounded-pill px-5 btn-lg fw-bold">
+            <i class="fas fa-arrow-left me-2"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

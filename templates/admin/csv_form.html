@@ -1,0 +1,22 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div class="module">
+    <h1>Import Verified Instruments</h1>
+    <form action="." method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <p>CSV/Excel file should have headers: <strong>Company Name</strong>, <strong>NSE/BSE Code</strong></p>
+        <div class="submit-row">
+            <input type="submit" value="Upload" class="default" />
+        </div>
+    </form>
+</div>
+<style>
+    .submit-row {
+        padding: 10px;
+        background: #f8f8f8;
+        border: 1px solid #eee;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}

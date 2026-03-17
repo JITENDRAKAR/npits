@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+  .register-card {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+    border: 1.5px solid #dee2e6;
+    background: #fff;
+    color: #333;
+    transition: background 0.18s, box-shadow 0.18s, transform 0.15s;
+    text-decoration: none;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .social-btn:hover {
+    background: #f8f9fa;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+    color: #111;
+  }
+
+  .social-icon-btn:hover {
+    background: #f8f9fa;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    border-color: var(--success-green) !important;
+  }
+
+  .social-icon-btn.bg-black:hover {
+    background: #222 !important;
+  }
+
+  .social-icon-btn svg {
+    flex-shrink: 0;
+  }
+
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #aaa;
+    font-size: 0.85rem;
+    margin: 18px 0;
+  }
+
+  .or-divider::before,
+  .or-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  /* Step visibility managed by showStep() JS function */
+
+  .otp-input-group input {
+    letter-spacing: 0.25em;
+    font-size: 1.25rem;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .verified-badge {
+    background: #e8f5e9;
+    border: 1.5px solid #4caf50;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    color: #2e7d32;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .step-indicator {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .step-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #dee2e6;
+    transition: background 0.3s;
+  }
+
+  .step-dot.active {
+    background: var(--success-green);
+  }
+
+  #resend-otp-link {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .auth-logo {
+    height: 90px;
+    width: auto;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 4px solid #fff;
+    transition: transform 0.3s ease;
+  }
+
+  .auth-logo:hover {
+    transform: scale(1.05);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-12 register-card">
+    <div class="card shadow border-0 rounded-4">
+      <div class="card-body p-4 p-md-5">
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+          {% load static %}
+          <img src="{% static 'images/logo.png' %}" alt="NPITS Logo" class="auth-logo mb-3">
+          <h4 class="fw-bold mb-1">Create Account</h4>
+          <p class="text-muted small mb-0">Join NPITS — Secure your investment future</p>
+        </div>
+
+        <!-- Step indicator dots -->
+        <div class="step-indicator">
+          <div class="step-dot active" id="dot-1"></div>
+          <div class="step-dot" id="dot-2"></div>
+          <div class="step-dot" id="dot-3"></div>
+        </div>
+
+        <!-- Django messages -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} border-0 small py-2 mb-3">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- ===================== STEP 1: Choose Method ===================== -->
+        <div id="step-social-section">
+          <p class="text-center text-muted small mb-4 fw-semibold text-uppercase" style="letter-spacing:.05em">Continue
+            with</p>
+
+          <div class="social-icons-row d-flex justify-content-center gap-3 mb-4">
+            <!-- Google -->
+            <a href="{% url 'google_login' %}" class="social-icon-btn d-flex align-items-center justify-content-center rounded-3 border" title="Continue with Google"
+               style="width: 52px; height: 52px; transition: all 0.2s; background: #fff;">
+              <svg width="24" height="24" viewBox="0 0 48 48">
+                <path fill="#4285F4" d="M46.145 24.5c0-1.616-.145-3.17-.415-4.664H24v8.821h12.445c-.537 2.9-2.17 5.355-4.627 7.005l7.482 5.81C43.36 37.354 46.145 31.39 46.145 24.5z" />
+                <path fill="#34A853" d="M24 47c6.24 0 11.475-2.065 15.3-5.592l-7.482-5.81c-2.07 1.388-4.72 2.21-7.818 2.21-6.012 0-11.1-4.06-12.926-9.525L3.545 34.246C7.345 41.78 15.075 47 24 47z" />
+                <path fill="#FBBC05" d="M11.074 28.283A13.9 13.9 0 0 1 10.5 24c0-1.49.258-2.94.574-4.283L3.545 13.754A22.93 22.93 0 0 0 1 24c0 3.69.882 7.183 2.545 10.246l7.529-5.963z" />
+                <path fill="#EA4335" d="M24 10.191c3.39 0 6.435 1.165 8.826 3.454l6.614-6.614C35.47 3.297 30.237 1 24 1 15.075 1 7.345 6.22 3.545 13.754l7.529 5.963C12.9 14.252 17.988 10.191 24 10.191z" />
+              </svg>
+            </a>
+
+            <!-- Apple -->
+            <a href="{% url 'apple_login' %}" class="social-icon-btn d-flex align-items-center justify-content-center rounded-3 border" title="Continue with Apple"
+               style="width: 52px; height: 52px; transition: all 0.2s; background: #fff;">
+               <svg width="22" height="22" viewBox="0 0 384 512" fill="#000">
+                 <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+               </svg>
+            </a>
+
+            <!-- Microsoft -->
+            <a href="{% url 'microsoft_login' %}" class="social-icon-btn d-flex align-items-center justify-content-center rounded-3 border" title="Continue with Microsoft"
+               style="width: 52px; height: 52px; transition: all 0.2s; background: #fff;">
+              <svg width="22" height="22" viewBox="0 0 21 21">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+              </svg>
+            </a>
+
+            <!-- Facebook -->
+            <a href="{% url 'facebook_login' %}" class="social-icon-btn d-flex align-items-center justify-content-center rounded-3 border" title="Continue with Facebook"
+               style="width: 52px; height: 52px; transition: all 0.2s; background: #fff;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.932-1.956 1.887v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
+              </svg>
+            </a>
+          </div>
+
+          <div class="or-divider"><span>or sign up with email</span></div>
+
+          <!-- Email input for OTP -->
+          <div class="mb-3">
+            <label for="signup-email" class="form-label small fw-bold text-uppercase text-muted">Email Address <span
+                class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="email" id="signup-email" class="form-control py-2" placeholder="Enter your email address"
+                autocomplete="email" required>
+              <button type="button" class="btn btn-success px-3 fw-bold" id="send-otp-btn" onclick="sendOtp()">
+                Send OTP
+              </button>
+            </div>
+            <div id="otp-send-msg" class="mt-2 small"></div>
+          </div>
+        </div>
+
+        <!-- ===================== STEP 2: Enter OTP ===================== -->
+        <div id="step-otp-section">
+          <div class="text-center mb-3">
+            <i class="fas fa-envelope-open-text text-success fa-2x mb-2"></i>
+            <p class="mb-1 fw-semibold">Check your inbox</p>
+            <p class="text-muted small mb-0">We sent a 6-digit code to <strong id="otp-email-display"></strong></p>
+          </div>
+
+          <div class="otp-input-group mb-3">
+            <label for="otp-code" class="form-label small fw-bold text-uppercase text-muted">6-Digit OTP Code</label>
+            <input type="text" id="otp-code" class="form-control py-2" placeholder="• • • • • •" maxlength="6"
+              inputmode="numeric" pattern="\d{6}">
+            <div id="otp-verify-msg" class="mt-2 small"></div>
+          </div>
+
+          <button type="button" class="btn btn-success w-100 py-2 fw-bold mb-2" onclick="verifyOtp()">
+            <i class="fas fa-check-circle me-1"></i> Verify OTP
+          </button>
+
+          <p class="text-center small text-muted mt-2">
+            Didn't receive it?
+            <span id="resend-timer" class="text-muted"></span>
+            <a id="resend-otp-link" class="text-success text-decoration-none d-none" onclick="resendOtp()">Resend
+              OTP</a>
+          </p>
+          <button type="button" class="btn btn-link btn-sm text-muted p-0 mt-1" onclick="goBackToEmail()">
+            ← Change email
+          </button>
+        </div>
+
+        <!-- ===================== STEP 3: Complete Signup ===================== -->
+        <div id="step-complete-section">
+          <!-- Verified email badge -->
+          <div class="verified-badge mb-3">
+            <i class="fas fa-check-circle"></i>
+            <span>Email verified: <strong id="verified-email-label"></strong></span>
+          </div>
+
+          <form method="post" id="signup-form">
+            {% csrf_token %}
+            <!-- Hidden email field so the form submits with the verified email -->
+            <input type="hidden" name="email" id="hidden-email">
+
+            <div class="mb-3">
+              <label for="id_full_name" class="form-label small fw-bold text-uppercase text-muted">Full Name <span
+                  class="text-danger">*</span></label>
+              <input type="text" name="full_name" id="id_full_name" class="form-control py-2"
+                placeholder="Enter your full name" required value="{{ form.full_name.value|default:'' }}">
+              {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors|join:", " }}
+              </div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_mobile_number" class="form-label small fw-bold text-uppercase text-muted">Mobile Number
+                <span class="text-danger">*</span></label>
+              <input type="tel" name="mobile_number" id="id_mobile_number" class="form-control py-2"
+                placeholder="Enter 10-digit mobile number" required maxlength="15"
+                value="{{ form.mobile_number.value|default:'' }}">
+              {% if form.mobile_number.errors %}<div class="text-danger small mt-1">{{ form.mobile_number.errors|join:",
+                " }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="id_password1" class="form-label small fw-bold text-uppercase text-muted">Password <span
+                  class="text-danger">*</span></label>
+              <input type="password" name="password1" id="id_password1" class="form-control py-2"
+                placeholder="Create a strong password" required autocomplete="new-password">
+              {% if form.password1.errors %}<div class="text-danger small mt-1">{{ form.password1.errors|join:", " }}
+              </div>{% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label for="id_password2" class="form-label small fw-bold text-uppercase text-muted">Confirm Password
+                <span class="text-danger">*</span></label>
+              <input type="password" name="password2" id="id_password2" class="form-control py-2"
+                placeholder="Re-enter your password" required autocomplete="new-password">
+              {% if form.password2.errors %}<div class="text-danger small mt-1">{{ form.password2.errors|join:", " }}
+              </div>{% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger border-0 small py-2 mb-3">
+              {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
+              Create Account <i class="fas fa-user-check ms-2"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Login link -->
+        <div class="text-center mt-4 pt-3 border-top">
+          <p class="small text-muted mb-0">Already have an account?
+            <a href="{% url 'login' %}" class="fw-bold text-decoration-none text-success">Login Here</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // CSRF helper
+  function getCsrf() {
+    const name = 'csrftoken';
+    for (const c of document.cookie.split(';')) {
+      const [k, v] = c.trim().split('=');
+      if (k === name) return decodeURIComponent(v);
+    }
+    return '';
+  }
+
+  // Current verified email
+  let verifiedEmail = '';
+  let resendTimer = null;
+
+  // ---- Step transitions ----
+  function showStep(step) {
+    document.getElementById('step-social-section').style.display = step === 1 ? '' : 'none';
+    document.getElementById('step-otp-section').style.display = step === 2 ? '' : 'none';
+    document.getElementById('step-complete-section').style.display = step === 3 ? '' : 'none';
+    ['dot-1', 'dot-2', 'dot-3'].forEach((id, i) => {
+      document.getElementById(id).classList.toggle('active', i < step);
+    });
+  }
+
+  // ---- Send OTP ----
+  async function sendOtp() {
+    const emailInput = document.getElementById('signup-email');
+    const email = emailInput.value.trim();
+    const msgEl = document.getElementById('otp-send-msg');
+
+    if (!email) { msgEl.innerHTML = '<span class="text-danger">Please enter your email address.</span>'; return; }
+
+    const btn = document.getElementById('send-otp-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    msgEl.innerHTML = '';
+
+    try {
+      const resp = await fetch("{% url 'send_signup_otp' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify({ email })
+      });
+      let data;
+      try { data = await resp.json(); } catch (parseErr) {
+        msgEl.innerHTML = `<span class="text-danger">Server error (${resp.status}). Please try again.</span>`;
+        btn.disabled = false; btn.textContent = 'Send OTP'; return;
+      }
+      if (data.status === 'ok') {
+        document.getElementById('otp-email-display').textContent = email;
+        showStep(2);
+        startResendTimer(120);
+      } else {
+        msgEl.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${data.message}</span>`;
+        btn.disabled = false;
+        btn.textContent = 'Send OTP';
+      }
+    } catch (e) {
+      msgEl.innerHTML = `<span class="text-danger">Network error: ${e.message}. Please try again.</span>`;
+      btn.disabled = false;
+      btn.textContent = 'Send OTP';
+    }
+  }
+
+  // ---- Verify OTP ----
+  async function verifyOtp() {
+    const email = document.getElementById('signup-email').value.trim();
+    const code = document.getElementById('otp-code').value.trim();
+    const msgEl = document.getElementById('otp-verify-msg');
+
+    if (!code || code.length !== 6) {
+      msgEl.innerHTML = '<span class="text-danger">Please enter the 6-digit code.</span>';
+      return;
+    }
+
+    msgEl.innerHTML = '<span class="text-muted"><i class="fas fa-spinner fa-spin me-1"></i>Verifying…</span>';
+
+    try {
+      const resp = await fetch("{% url 'verify_signup_otp' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify({ email, otp: code })
+      });
+      const data = await resp.json();
+      if (data.status === 'ok') {
+        verifiedEmail = email;
+        document.getElementById('verified-email-label').textContent = email;
+        document.getElementById('hidden-email').value = email;
+        if (resendTimer) clearInterval(resendTimer);
+        showStep(3);
+      } else {
+        msgEl.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle me-1"></i>${data.message}</span>`;
+      }
+    } catch (e) {
+      msgEl.innerHTML = '<span class="text-danger">Network error. Please try again.</span>';
+    }
+  }
+
+  // ---- Resend OTP ----
+  async function resendOtp() {
+    document.getElementById('otp-code').value = '';
+    await sendOtp();
+    showStep(2);
+  }
+
+  // ---- Go back ----
+  function goBackToEmail() {
+    document.getElementById('otp-code').value = '';
+    document.getElementById('otp-verify-msg').innerHTML = '';
+    if (resendTimer) clearInterval(resendTimer);
+    showStep(1);
+    // re-enable send button
+    const btn = document.getElementById('send-otp-btn');
+    btn.disabled = false;
+    btn.textContent = 'Send OTP';
+  }
+
+  // ---- Countdown Timer ----
+  function startResendTimer(seconds) {
+    if (resendTimer) clearInterval(resendTimer);
+    const timerEl = document.getElementById('resend-timer');
+    const linkEl = document.getElementById('resend-otp-link');
+    linkEl.classList.add('d-none');
+
+    let remaining = seconds;
+    function update() {
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      timerEl.textContent = `Resend in ${m}:${String(s).padStart(2, '0')}`;
+      if (remaining <= 0) {
+        clearInterval(resendTimer);
+        timerEl.textContent = '';
+        linkEl.classList.remove('d-none');
+      }
+      remaining--;
+    }
+    update();
+    resendTimer = setInterval(update, 1000);
+  }
+
+  // ---- Allow Enter key to trigger OTP verify ----
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      const otpSection = document.getElementById('step-otp-section');
+      if (otpSection.style.display !== 'none') verifyOtp();
+    }
+  });
+
+  // Initialize step visibility on page load
+  {% if form.errors %}
+  // Form was submitted with errors — show step 3 with the verified email
+  const submittedEmail = "{{ form.email.value|default:'' }}";
+  if (submittedEmail) {
+    document.getElementById('signup-email').value = submittedEmail;
+    document.getElementById('verified-email-label').textContent = submittedEmail;
+    document.getElementById('hidden-email').value = submittedEmail;
+    verifiedEmail = submittedEmail;
+    showStep(3);
+  } else {
+    showStep(1);
+  }
+  {% else %}
+  showStep(1);
+  {% endif %}
+</script>
+{% endblock %}

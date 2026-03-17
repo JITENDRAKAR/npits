@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom text-center">
+                <h5 class="mb-1 fw-bold text-danger">{{ item.instrument.symbol }}</h5>
+                <h6 class="mb-0 fw-semibold">Delete Holding</h6>
+            </div>
+            <div class="card-body p-4 text-center">
+                <p class="lead mb-4">Are you sure you want to delete<br><strong>{{ item.instrument.symbol }}</strong>
+                    from your portfolio?</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-center mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-light px-4 border">Cancel, Keep it</a>
+                        <button type="submit" class="btn btn-danger px-4 fw-bold">Yes, Delete Position</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light p-3 text-center">
+                <p class="text-muted small mb-0">This action cannot be undone. All tracking data for this position will
+                    be lost.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

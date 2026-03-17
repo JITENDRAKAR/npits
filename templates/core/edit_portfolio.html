@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-1 fw-bold text-primary">{{ item.instrument.symbol }}</h5>
+                <h6 class="mb-2 fw-semibold">Edit Holding</h6>
+                <p class="text-muted small mb-0">Update your quantity or average cost for this position</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.quantity.id_for_label }}"
+                            class="form-label fw-semibold small text-uppercase">Quantity</label>
+                        {{ form.quantity }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.avg_cost.id_for_label }}"
+                            class="form-label fw-semibold small text-uppercase">Average Cost (₹)</label>
+                        {{ form.avg_cost }}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-light px-4 border">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-light p-3 text-center">
+                <p class="text-muted small mb-0">Changes will be reflected in your dashboard analytics immediately.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

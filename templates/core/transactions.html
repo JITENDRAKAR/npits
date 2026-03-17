@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+                <div>
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2 text-primary"></i>Transaction History</h5>
+                    <p class="text-muted small mb-0">Complete record of your buy and sell activities</p>
+                </div>
+                <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm rounded-pill border">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Filters Section -->
+                <div class="row g-3 mb-4 p-3 bg-light rounded-3 border">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">Date From</label>
+                        <input type="date" id="filterDateFrom" class="form-control form-control-sm rounded-pill" onchange="applyFilters()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">Date To</label>
+                        <input type="date" id="filterDateTo" class="form-control form-control-sm rounded-pill" onchange="applyFilters()">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Type</label>
+                        <select id="filterType" class="form-select form-select-sm rounded-pill" onchange="applyFilters()">
+                            <option value="ALL">All Transactions</option>
+                            <option value="BUY">Buy</option>
+                            <option value="SELL">Sell</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">Instrument</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-white border-end-0 rounded-start-pill">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" id="filterInstrument" class="form-control border-start-0 rounded-end-pill" 
+                                   placeholder="Search symbol..." onkeyup="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button class="btn btn-outline-secondary btn-sm w-100 rounded-pill" onclick="resetFilters()">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="transactionTable">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-uppercase small fw-bold text-muted">Date</th>
+                                <th class="text-uppercase small fw-bold text-muted">Type</th>
+                                <th class="text-uppercase small fw-bold text-muted">Instrument</th>
+                                <th class="text-uppercase small fw-bold text-muted text-end">Quantity</th>
+                                <th class="text-uppercase small fw-bold text-muted text-end">Price (₹)</th>
+                                <th class="text-uppercase small fw-bold text-muted text-end">Total (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transactions %}
+                            <tr class="transaction-row" data-date="{{ tx.date|date:'Y-m-d' }}" data-type="{{ tx.transaction_type }}" data-symbol="{{ tx.instrument.symbol }}">
+                                <td class="small">{{ tx.date|date:"d M Y" }}</td>
+                                <td>
+                                    <span
+                                        class="badge rounded-pill {% if tx.transaction_type == 'BUY' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %} px-2 py-1">
+                                        {{ tx.transaction_type }}
+                                    </span>
+                                </td>
+                                <td class="fw-bold">{{ tx.instrument.symbol }}</td>
+                                <td class="text-end fw-semibold">{{ tx.quantity }}</td>
+                                <td class="text-end">&#8377;{{ tx.price|floatformat:2 }}</td>
+                                <td class="text-end fw-bold">
+                                    &#8377;{% widthratio tx.quantity 1 tx.price %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="emptyRow">
+                                <td colspan="6" class="text-center py-5 text-muted">No transactions recorded yet.</td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="noResultsRow" style="display: none;">
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="fas fa-search me-2"></i>No transactions match your filters.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyFilters() {
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+    const transType = document.getElementById('filterType').value;
+    const instrument = document.getElementById('filterInstrument').value.toUpperCase();
+
+    const rows = document.querySelectorAll('.transaction-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowDate = row.dataset.date;
+        const rowType = row.dataset.type;
+        const rowSymbol = row.dataset.symbol.toUpperCase();
+
+        let show = true;
+
+        if (dateFrom && rowDate < dateFrom) show = false;
+        if (dateTo && rowDate > dateTo) show = false;
+        if (transType !== 'ALL' && rowType !== transType) show = false;
+        if (instrument && !rowSymbol.includes(instrument)) show = false;
+
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+
+    const noResultsRow = document.getElementById('noResultsRow');
+    if (noResultsRow) {
+        noResultsRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+}
+
+function resetFilters() {
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterType').value = 'ALL';
+    document.getElementById('filterInstrument').value = '';
+    applyFilters();
+}
+</script>
+{% endblock %}

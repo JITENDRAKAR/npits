@@ -1,0 +1,915 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    /* ── Professional Typography & Global ── */
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.4);
+        --card-shadow: 0 10px 35px rgba(0, 0, 0, 0.04);
+        --primary-gradient: linear-gradient(135deg, var(--primary-color), #0056b3);
+    }
+
+    .strategy-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 24px;
+        padding: 28px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .strategy-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+        border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    /* Premium Left-Accent Borders */
+    .strategy-card.border-flexi { border-left: 6px solid #0F172A; }
+    .strategy-card.border-quant { border-left: 6px solid #10B981; }
+    .strategy-card.border-pyramid { border-left: 6px solid #EF4444; }
+    .strategy-card.border-growth { border-left: 6px solid #F59E0B; }
+    .strategy-card.border-others { border-left: 6px solid #94A3B8; }
+
+    .strategy-card-body {
+        flex-grow: 1;
+        margin-bottom: 24px;
+    }
+
+    .strategy-card-footer {
+        padding-top: 24px;
+        border-top: 1px solid #f1f5f9;
+        text-align: center;
+    }
+
+    .btn-portfolio-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 28px;
+        border-radius: 50px;
+        background: #0f172a;
+        color: #fff !important;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-decoration: none !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        letter-spacing: 0.02em;
+        width: 100%;
+    }
+
+    .btn-portfolio-link:hover {
+        transform: scale(1.03);
+        box-shadow: 0 10px 25px rgba(0, 61, 124, 0.25);
+        color: #fff !important;
+    }
+
+    .strategy-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .strategy-title {
+        color: #1e293b;
+        font-weight: 800;
+        font-size: 1.25rem;
+        margin-top: 8px;
+        letter-spacing: -0.02em;
+    }
+
+    .section-label {
+        font-weight: 800;
+        color: #94a3b8;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .rule-item {
+        font-size: 0.9rem;
+        color: #334155;
+        margin-bottom: 0.6rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        line-height: 1.4;
+    }
+
+    .rule-item i {
+        color: var(--primary-color);
+        width: 16px;
+        text-align: center;
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+
+    .badge-strategy {
+        background: rgba(0, 61, 124, 0.06);
+        color: var(--primary-color);
+        padding: 5px 14px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+    }
+
+    /* ── Recommended Stocks Strip ── */
+    .rec-stocks-section {
+        margin-top: 1.5rem;
+        padding: 14px;
+        background: #f8fafc;
+        border-radius: 18px;
+        border: 1px solid rgba(0, 0, 0, 0.02);
+    }
+
+    .rec-stocks-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #94a3b8;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stock-ticker-wrap {
+        overflow: hidden;
+        white-space: nowrap;
+        mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    }
+
+    .stock-ticker-inner {
+        display: inline-flex;
+        gap: 10px;
+        padding: 0 10px;
+    }
+
+    .stock-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 14px;
+        border-radius: 50px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        transition: all 0.25s ease;
+        text-decoration: none !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+
+    .stock-badge:hover {
+        background: var(--primary-color);
+        color: #fff !important;
+        border-color: var(--primary-color);
+        transform: scale(1.05);
+    }
+
+    /* ── Investment Calculator (Glassmorphism) ── */
+    .calc-container {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border-radius: 40px;
+        padding: 48px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        margin-top: 1rem;
+        margin-bottom: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .calc-container::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(0, 61, 124, 0.03) 0%, transparent 70%);
+        z-index: -1;
+    }
+
+    .profile-btn-group {
+        display: flex;
+        gap: 8px;
+        background: rgba(15, 23, 42, 0.04);
+        padding: 6px;
+        border-radius: 16px;
+        margin-bottom: 25px;
+    }
+
+    .profile-btn {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 12px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        transition: all 0.25s ease;
+    }
+
+    .profile-btn.active {
+        background: #ffffff;
+        color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .calc-input-wrap {
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .calc-input-wrap i {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary-color);
+        font-size: 1.25rem;
+    }
+
+    .calc-input {
+        width: 100%;
+        padding: 16px 20px 16px 50px;
+        border-radius: 18px;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        font-weight: 800;
+        font-size: 1.25rem;
+        transition: all 0.3s;
+        color: #1e293b;
+    }
+
+    .calc-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 5px rgba(0, 61, 124, 0.1);
+    }
+
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        border-radius: 16px;
+        margin-bottom: 10px;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.02);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        transition: all 0.25s ease;
+    }
+
+    .result-item:hover {
+        transform: scale(1.02) translateX(5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .result-label {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #475569;
+    }
+
+    .result-value {
+        font-weight: 800;
+        color: #1e293b;
+        font-size: 1.05rem;
+    }
+
+    .portfolio-graph-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-left: 6px solid var(--primary-color);
+        border-radius: 24px;
+        padding: 24px;
+        height: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        transition: all 0.35s ease;
+    }
+
+    .portfolio-graph-card:hover {
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+        transform: translateY(-5px);
+    }
+
+    .chart-center-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-800 display-5 text-dark" style="letter-spacing: -0.04em;">Investment Strategies</h1>
+        <p class="text-muted lead">Choose investor profile; initial max capital per stock/ETF adjusts automatically.</p>
+    </div>
+
+    <!-- Top Header Section -->
+    <div class="row align-items-center mb-5 g-4">
+        <div class="col-lg-7">
+            <h1 class="display-4 fw-900 mb-3" style="letter-spacing: -0.04em; color: #0f172a;">
+                Strategic <span class="text-primary">Intelligence</span>
+            </h1>
+            <p class="lead text-muted mb-0" style="max-width: 600px; line-height: 1.6;">
+                Harness automated, rule-based investment frameworks designed for systematic growth and risk mitigation.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            {% if has_investments %}
+            <div class="portfolio-graph-card animate__animated animate__fadeInRight h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <span class="badge-strategy mb-1">PRO PORTFOLIO</span>
+                        <h4 class="fw-800 text-dark mb-0" style="font-size: 1.15rem; letter-spacing: -0.02em;">Portfolio Exposure</h4>
+                    </div>
+                    <a href="{% url 'dashboard' %}" class="small text-decoration-none fw-700 text-primary">
+                        View Detailed <i class="fas fa-arrow-right ms-1" style="font-size: 0.75rem;"></i>
+                    </a>
+                </div>
+                <div class="chart-container" style="height: 220px; position: relative;">
+                    <canvas id="allocationChart"></canvas>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if user.is_authenticated and not has_investments %}
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-6">
+            <div class="alert alert-info border-0 shadow-sm text-center py-4 animate__animated animate__fadeIn" style="border-radius: 20px; background: rgba(13, 110, 253, 0.05); color: #084298;">
+                <i class="fas fa-info-circle fa-2x mb-3 d-block"></i>
+                <div class="fw-bold h6">Your Portfolio Visualization</div>
+                <p class="mb-0 small">Start investing based on our strategies to see your allocation graph here.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Investment Calculator Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="calc-container animate__animated animate__fadeInUp">
+                <div class="row align-items-center">
+                    <div class="col-md-6 pe-lg-5">
+                        <div class="badge-strategy mb-3">AI PROJECTION</div>
+                        <h3 class="fw-800 mb-3" style="letter-spacing: -0.03em; color: #1e293b;">Investment Allocation Calculator</h3>
+                        <p class="text-muted small mb-4">Optimize your capital distribution based on rule-based risk profiles.</p>
+                        
+                        <div class="calc-input-wrap">
+                            <i class="fas fa-rupee-sign"></i>
+                            <input type="number" id="calcAmount" class="calc-input" placeholder="Amount (e.g. 100,000)" value="100000">
+                        </div>
+
+                        <label class="section-label mb-3">Investor Risk Profile</label>
+                        <div class="profile-btn-group">
+                            <button class="profile-btn" onclick="setProfile('conservative')" data-profile="conservative">Conservative</button>
+                            <button class="profile-btn active" onclick="setProfile('moderate')" data-profile="moderate">Moderate</button>
+                            <button class="profile-btn" onclick="setProfile('growth')" data-profile="growth">Growth</button>
+                            <button class="profile-btn" onclick="setProfile('aggressive')" data-profile="aggressive">Aggressive</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mt-5 mt-md-0 border-start ps-lg-5">
+                        <div class="row align-items-center">
+                            <div class="col-sm-7 order-2 order-sm-1">
+                                <div id="calcResults">
+                                    <div class="result-item" style="border-left: 4px solid #0F172A;">
+                                        <span class="result-label">FlexiMultiInvest</span>
+                                        <span class="result-value" id="res-flexi">₹0</span>
+                                    </div>
+                                    <div class="result-item" style="border-left: 4px solid #10B981;">
+                                        <span class="result-label">NiftyQuant</span>
+                                        <span class="result-value" id="res-quant">₹0</span>
+                                    </div>
+                                    <div class="result-item" style="border-left: 4px solid #EF4444;">
+                                        <span class="result-label">Pyramiding</span>
+                                        <span class="result-value" id="res-pyramid">₹0</span>
+                                    </div>
+                                    <div class="result-item" style="border-left: 4px solid #F59E0B;">
+                                        <span class="result-label">ReinvestX</span>
+                                        <span class="result-value" id="res-growth">₹0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-5 order-1 order-sm-2 mb-4 mb-sm-0 text-center chart-center-wrapper">
+                                <canvas id="calcChart" style="max-width: 160px; max-height: 160px;"></canvas>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <div class="d-inline-block px-4 py-2 rounded-pill bg-white shadow-sm border border-opacity-10 fw-800 text-primary" id="calcTotalDisplay">
+                                Total: ₹0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy Tiles Grid -->
+    <div class="row g-4 justify-content-center">
+        <!-- 1. FlexiMultiInvest -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="strategy-card border-flexi h-100">
+                <div class="strategy-header">
+                    <span class="badge-strategy">PASSIVE & STEADY</span>
+                    <h2 class="strategy-title">FlexiMultiInvest</h2>
+                </div>
+
+                <div class="strategy-card-body">
+                    <span class="section-label">Investment Logic</span>
+                    <div class="rule-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Diversified Global & Sectoral ETFs</span>
+                    </div>
+
+                    <span class="section-label">Operational Rules</span>
+                    <div class="rule-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Initial: <strong>₹5,000</strong>/instrument</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-rocket"></i>
+                        <span>Target: <strong>+22%</strong> Profit</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Reinvest <strong>93%</strong> Compound</span>
+                    </div>
+
+                    {% if flexi_stocks %}
+                    <div class="rec-stocks-section">
+                        <div class="rec-stocks-label"><i class="fas fa-bolt"></i> Recommended</div>
+                        <div class="stock-ticker-wrap">
+                            <div class="stock-ticker-inner" id="flexi-ticker">
+                                {% for stock in flexi_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'flexi')">{{ stock }}</a>
+                                {% endfor %}
+                                {% for stock in flexi_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'flexi')">{{ stock }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="strategy-card-footer">
+                    <a href="{% url 'dashboard' %}?strategy=flexi" class="btn-portfolio-link" style="background: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);">
+                        <i class="fas fa-sliders-h"></i> Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. NiftyQuant -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="strategy-card border-quant h-100">
+                <div class="strategy-header">
+                    <span class="badge-strategy">QUANTITATIVE</span>
+                    <h2 class="strategy-title">NiftyQuant</h2>
+                </div>
+
+                <div class="strategy-card-body">
+                    <span class="section-label">Investment Logic</span>
+                    <div class="rule-item">
+                        <i class="fas fa-microchip"></i>
+                        <span>High-Quality Nifty 50 Momentum</span>
+                    </div>
+
+                    <span class="section-label">Operational Rules</span>
+                    <div class="rule-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Initial: <strong>₹5,000</strong>/stock</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-bullseye"></i>
+                        <span>Target: <strong>+22%</strong> Profit</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-robot"></i>
+                        <span>Automated Rebalancing</span>
+                    </div>
+
+                    {% if quant_stocks %}
+                    <div class="rec-stocks-section">
+                        <div class="rec-stocks-label"><i class="fas fa-bolt"></i> Recommended</div>
+                        <div class="stock-ticker-wrap">
+                            <div class="stock-ticker-inner" id="quant-ticker">
+                                {% for stock in quant_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'quant')">{{ stock }}</a>
+                                {% endfor %}
+                                {% for stock in quant_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'quant')">{{ stock }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="strategy-card-footer">
+                    <a href="{% url 'dashboard' %}?strategy=quant" class="btn-portfolio-link" style="background: #10B981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                        <i class="fas fa-sliders-h"></i> Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Pyramiding -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="strategy-card border-pyramid h-100">
+                <div class="strategy-header">
+                    <span class="badge-strategy">AGGRESSIVE</span>
+                    <h2 class="strategy-title">Pyramiding</h2>
+                </div>
+
+                <div class="strategy-card-body">
+                    <span class="section-label">Investment Logic</span>
+                    <div class="rule-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Scale on Strength & Drawdowns</span>
+                    </div>
+
+                    <span class="section-label">Operational Rules</span>
+                    <div class="rule-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Initial: <strong>₹5,000</strong>/ETF</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-percentage"></i>
+                        <span>Profit Cap: <strong>+22%</strong></span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Averaging Matrix applied</span>
+                    </div>
+
+                    {% if pyramid_stocks %}
+                    <div class="rec-stocks-section">
+                        <div class="rec-stocks-label"><i class="fas fa-bolt"></i> Recommended</div>
+                        <div class="stock-ticker-wrap">
+                            <div class="stock-ticker-inner" id="pyramid-ticker">
+                                {% for stock in pyramid_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'pyramid')">{{ stock }}</a>
+                                {% endfor %}
+                                {% for stock in pyramid_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'pyramid')">{{ stock }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="strategy-card-footer">
+                    <a href="{% url 'dashboard' %}?strategy=pyramid" class="btn-portfolio-link" style="background: #EF4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">
+                        <i class="fas fa-sliders-h"></i> Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ReinvestX -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="strategy-card border-growth h-100">
+                <div class="strategy-header">
+                    <span class="badge-strategy">HIGH GROWTH</span>
+                    <h2 class="strategy-title">ReinvestX</h2>
+                </div>
+
+                <div class="strategy-card-body">
+                    <span class="section-label">Investment Logic</span>
+                    <div class="rule-item">
+                        <i class="fas fa-gem"></i>
+                        <span>Selection-Based Growth Stocks</span>
+                    </div>
+
+                    <span class="section-label">Operational Rules</span>
+                    <div class="rule-item">
+                        <i class="fas fa-wallet"></i>
+                        <span>Initial: <strong>₹5,000</strong>/stock</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-redo"></i>
+                        <span>Compound Max Profits</span>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Selective Exit Triggers</span>
+                    </div>
+
+                    {% if growth_stocks %}
+                    <div class="rec-stocks-section">
+                        <div class="rec-stocks-label"><i class="fas fa-bolt"></i> Recommended</div>
+                        <div class="stock-ticker-wrap">
+                            <div class="stock-ticker-inner" id="growth-ticker">
+                                {% for stock in growth_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'growth')">{{ stock }}</a>
+                                {% endfor %}
+                                {% for stock in growth_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'growth')">{{ stock }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="strategy-card-footer">
+                    <a href="{% url 'dashboard' %}?strategy=growth" class="btn-portfolio-link" style="background: #F59E0B; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);">
+                        <i class="fas fa-sliders-h"></i> Configuration
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Others -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="strategy-card border-others h-100">
+                <div class="strategy-header">
+                    <span class="badge-strategy" style="background: rgba(148, 163, 184, 0.1); color: #64748b;">UNTRACKED</span>
+                    <h2 class="strategy-title text-secondary">Other Holdings</h2>
+                </div>
+
+                <div class="strategy-card-body">
+                    <p class="text-muted small mb-3">Portfolio holdings not mapped to primary automated strategies.</p>
+
+                    {% if others_stocks %}
+                    <div class="rec-stocks-section">
+                        <div class="rec-stocks-label text-secondary"><i class="fas fa-folder"></i> Current Holdings</div>
+                        <div class="stock-ticker-wrap">
+                            <div class="stock-ticker-inner" id="others-ticker">
+                                {% for stock in others_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'others')">{{ stock }}</a>
+                                {% endfor %}
+                                {% for stock in others_stocks %}
+                                <a href="javascript:void(0)" class="stock-badge" onclick="handleStockClick(event, '{{ stock }}', 'others')">{{ stock }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted border border-dashed rounded-3">
+                        <i class="fas fa-check-double text-success mb-2 d-block fa-lg"></i>
+                        <span class="small fw-600">Pure Strategy Portfolio</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="strategy-card-footer">
+                    <a href="{% url 'dashboard' %}?strategy=others" class="btn-portfolio-link" style="background: #64748b; box-shadow: 0 4px 12px rgba(100, 116, 139, 0.25);">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Stock Availability Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    <div id="investToast" class="toast align-items-center text-bg-warning border-0 shadow-lg" role="alert"
+        aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body fw-bold">
+                <i class="fas fa-info-circle me-2"></i>
+                    Please invest at least ₹5,000.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js Datalabels Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<script>
+    function handleStockClick(event, symbol, strategy) {
+        event.preventDefault();
+        {% if user.is_authenticated %}
+        window.location.href = '/dashboard/?strategy=' + strategy;
+        {% else %}
+        window.location.href = "{% url 'login' %}";
+        {% endif %}
+    }
+
+    // ── Professional Animation for Tickers ──
+    document.querySelectorAll('.stock-ticker-inner').forEach(function (el) {
+        const count = el.querySelectorAll('.stock-badge').length / 2;
+        let duration = '18s';
+        if (el.id === 'others-ticker') {
+            duration = '120s';
+        } else {
+            duration = count < 5 ? '12s' : (count > 20 ? '35s' : '22s');
+        }
+        
+        el.style.animation = `scrollTicker ${duration} linear infinite`;
+    });
+
+    // Custom Keyframes for Ticker (Fallback if not in CSS)
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `@keyframes scrollTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`;
+    document.head.appendChild(styleSheet);
+
+    {% if has_investments %}
+    // ── Allocation Chart (Portfolio) ──
+    const ctx = document.getElementById('allocationChart').getContext('2d');
+    const dataValues = {{ chart_values|safe }};
+    const chartLabels = {{ chart_labels|safe }};
+    const totalInvested = dataValues.reduce((a, b) => a + b, 0);
+    const actualTotal = totalInvested > 0 ? totalInvested : 1;
+
+    // Professional Center Text Plugin
+    const centerTextPlugin = {
+        id: 'centerText',
+        afterDraw: function(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            const { ctx, chartArea: { top, bottom, left, right } } = chart;
+            ctx.save();
+            const centerX = (left + right) / 2;
+            const centerY = (top + bottom) / 2;
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Label
+            ctx.font = '700 12px "Inter", sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('TOTAL ASSETS', centerX, centerY - 12);
+
+            // Value
+            ctx.font = '800 22px "Inter", sans-serif';
+            ctx.fillStyle = '#1e293b';
+            const valueText = '₹' + totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            ctx.fillText(valueText, centerX, centerY + 12);
+            ctx.restore();
+        }
+    };
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        plugins: [centerTextPlugin],
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                data: dataValues,
+                backgroundColor: ['#0F172A', '#10B981', '#EF4444', '#F59E0B', '#94A3B8'],
+                borderWidth: 0,
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '78%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 30,
+                        usePointStyle: true,
+                        font: { size: 13, weight: '600', family: 'Inter' },
+                        generateLabels: (chart) => {
+                            const data = chart.data;
+                            return data.labels.map((label, i) => {
+                                const val = data.datasets[0].data[i];
+                                const p = ((val / actualTotal) * 100).toFixed(1);
+                                return {
+                                    text: `${label} (${p}%)`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    index: i
+                                };
+                            });
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                        label: (ctx) => ' ₹' + ctx.parsed.toLocaleString('en-IN')
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+
+    // ── Investment Calculator Logic ──
+    let currentCalcProfile = 'moderate';
+    let calcChart = null;
+
+    const profileRatios = {
+        conservative: { flexi: 0.50, pyramid: 0.25, quant: 0.167, growth: 0.083 },
+        moderate: { flexi: 0.25, pyramid: 0.25, quant: 0.25, growth: 0.25 },
+        growth: { flexi: 0.133, pyramid: 0.20, quant: 0.267, growth: 0.40 },
+        aggressive: { flexi: 0.05, pyramid: 0.15, quant: 0.30, growth: 0.50 }
+    };
+
+    function setProfile(profile) {
+        currentCalcProfile = profile;
+        document.querySelectorAll('.profile-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.profile === profile);
+        });
+        updateCalculator();
+    }
+
+    const calcAmountInput = document.getElementById('calcAmount');
+    if (calcAmountInput) {
+        calcAmountInput.addEventListener('input', updateCalculator);
+    }
+
+    function updateCalculator() {
+        const amount = parseFloat(document.getElementById('calcAmount').value) || 0;
+        const ratios = profileRatios[currentCalcProfile];
+
+        const flexi = Math.round(amount * ratios.flexi);
+        const quant = Math.round(amount * ratios.quant);
+        const pyramid = Math.round(amount * ratios.pyramid);
+        const growth = Math.round(amount * ratios.growth);
+
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = '₹' + val.toLocaleString('en-IN');
+        };
+
+        setVal('res-flexi', flexi);
+        setVal('res-quant', quant);
+        setVal('res-pyramid', pyramid);
+        setVal('res-growth', growth);
+        
+        const totalDisplay = document.getElementById('calcTotalDisplay');
+        if (totalDisplay) totalDisplay.innerText = 'Total: ₹' + amount.toLocaleString('en-IN');
+
+        updateCalcChart([flexi, quant, pyramid, growth]);
+    }
+
+    function updateCalcChart(data) {
+        const chartCanvas = document.getElementById('calcChart');
+        if (!chartCanvas) return;
+
+        if (calcChart) {
+            calcChart.data.datasets[0].data = data;
+            calcChart.update();
+        } else {
+            const ctx = chartCanvas.getContext('2d');
+            calcChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Flexi', 'Quant', 'Pyramiding', 'ReinvestX'],
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#0F172A', '#10B981', '#EF4444', '#F59E0B'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '75%',
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            padding: 10,
+                            callbacks: {
+                                label: (ctx) => ' ₹' + ctx.parsed.toLocaleString('en-IN')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('calcAmount')) updateCalculator();
+    });
+</script>
+{% endblock %}

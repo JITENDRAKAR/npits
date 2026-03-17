@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row animate__animated animate__fadeIn">
+    <div class="col-md-12">
+        <!-- Premium Header Area -->
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"
+                                class="text-decoration-none text-muted">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Lot Breakdown</li>
+                    </ol>
+                </nav>
+                <h2 class="mb-0 fw-bold display-6">
+                    <span class="text-primary">{{ instrument.symbol }}</span> <span class="text-muted fw-light">Lot
+                        Breakdown</span>
+                </h2>
+                <p class="text-muted mb-0">Detailed First-In, First-Out (FIFO) view of your active holdings.</p>
+            </div>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+        </div>
+
+        <div class="row mb-4 h-100">
+            <!-- Summary Stats Cards -->
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 bg-primary text-white overflow-hidden"
+                    style="min-height: 120px;">
+                    <div class="card-body d-flex flex-column justify-content-center position-relative">
+                        <i class="fas fa-layer-group position-absolute opacity-10"
+                            style="font-size: 5rem; right: -10px; top: 10px;"></i>
+                        <div class="small text-uppercase opacity-75 fw-bold mb-1">Total Quantity</div>
+                        <h2 class="mb-0 fw-bold">{{ total_quantity }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 bg-dark text-white overflow-hidden"
+                    style="min-height: 120px;">
+                    <div class="card-body d-flex flex-column justify-content-center position-relative">
+                        <i class="fas fa-wallet position-absolute opacity-10"
+                            style="font-size: 5rem; right: -10px; top: 10px;"></i>
+                        <div class="small text-uppercase opacity-75 fw-bold mb-1">Total Invested</div>
+                        <h2 class="mb-0 fw-bold">&#8377;{{ total_invested|floatformat:2 }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 bg-white overflow-hidden" style="min-height: 120px;">
+                    <div class="card-body d-flex flex-column justify-content-center position-relative">
+                        <i class="fas fa-chart-line position-absolute text-success opacity-10"
+                            style="font-size: 5rem; right: -10px; top: 10px;"></i>
+                        <div class="small text-uppercase text-muted fw-bold mb-1">Current Price (LTP)</div>
+                        <h2 class="mb-0 fw-bold text-success">&#8377;{{ lots.0.ltp|floatformat:2 }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 bg-white overflow-hidden" style="min-height: 120px;">
+                    <div class="card-body d-flex flex-column justify-content-center position-relative">
+                        <i class="fas fa-tag position-absolute text-info opacity-10"
+                            style="font-size: 5rem; right: -10px; top: 10px;"></i>
+                        <div class="small text-uppercase text-muted fw-bold mb-1">Average Cost</div>
+                        <h2 class="mb-0 fw-bold text-info">&#8377;{{ avg_cost|floatformat:2 }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lots Table -->
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-list-ul me-2 text-primary"></i>Active Purchase Lots</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light border-0">
+                        <tr>
+                            <th class="ps-4 text-uppercase small fw-bold text-muted border-0">Purchase Date</th>
+                            <th class="text-uppercase small fw-bold text-muted border-0">Holding Period</th>
+                            <th class="text-uppercase small fw-bold text-muted text-end border-0">Quantity</th>
+                            <th class="text-uppercase small fw-bold text-muted text-end border-0">Buy Price</th>
+                            <th class="text-uppercase small fw-bold text-muted text-end border-0">Market Value</th>
+                            <th class="text-uppercase small fw-bold text-muted text-end border-0">Unrealized P&L</th>
+                            <th class="text-uppercase small fw-bold text-muted text-center border-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-0">
+                        {% for lot in lots %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold">{{ lot.date|date:"d M Y" }}</div>
+                                <div class="text-muted extra-small">Lot ID: #{{ lot.id }}</div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill bg-light text-dark fw-normal border">
+                                    {{ lot.days_held }} days
+                                </span>
+                            </td>
+                            <td class="text-end fw-bold">{{ lot.quantity }}</td>
+                            <td class="text-end text-muted">₹{{ lot.price|floatformat:2 }}</td>
+                            <td class="text-end fw-bold">₹{% widthratio lot.quantity 1 lot.ltp %}</td>
+                            <td class="text-end">
+                                <div
+                                    class="fw-bold {% if lot.unrealized_pnl >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {% if lot.unrealized_pnl >= 0 %}+{% endif %}₹{{ lot.unrealized_pnl|floatformat:2 }}
+                                </div>
+                                <div
+                                    class="small {% if lot.pnl_pct >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ lot.pnl_pct|floatformat:2 }}%
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <a href="{% url 'edit_lot' lot.id %}"
+                                        class="btn btn-sm btn-light border rounded-pill me-2" title="Edit Lot">
+                                        <i class="fas fa-edit text-primary"></i>
+                                    </a>
+                                    <a href="{% url 'delete_lot' lot.id %}"
+                                        class="btn btn-sm btn-light border rounded-pill" title="Delete Lot"
+                                        onclick="return confirm('Delete this lot? Total holdings will decrease.')">
+                                        <i class="fas fa-trash text-danger"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not lots %}
+            <div class="text-center py-5">
+                <i class="fas fa-box-open mb-3 opacity-25" style="font-size: 4rem;"></i>
+                <h5 class="text-muted">No active lots found for this instrument.</h5>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .extra-small {
+        font-size: 0.7rem;
+    }
+
+    .card {
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-3px);
+    }
+
+    .table-hover tbody tr {
+        transition: background-color 0.2s;
+        cursor: pointer;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

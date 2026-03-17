@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-file-upload me-2 text-primary"></i>{{ title }}</h5>
+                <p class="text-muted small mb-0">Choose your file to import data into NPITS</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.file.id_for_label }}"
+                            class="form-label fw-semibold small text-uppercase">Select CSV/Excel File</label>
+                        {{ form.file }}
+                    </div>
+
+                    <div class="alert alert-info border-0 bg-light rounded-3 d-flex align-items-center mb-4">
+                        <i class="fas fa-info-circle me-3 text-info"></i>
+                        <div class="small">
+                            <strong>Note:</strong> File should follow the standard NPITS format for accurate processing and proper NSE code like reliance,tcs.
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary py-2 fw-bold">Import Data</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-light py-2 border">Cancel</a>
+                    </div>
+
+                    <hr class="my-4 opacity-50">
+
+                    <div class="text-center">
+                        <p class="text-muted small mb-2">Need a template? Download sample:</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            {% if 'Portfolio' in title %}
+                            <a href="{% static 'samples/sample_portfolio.csv' %}"
+                                class="btn btn-sm btn-outline-secondary px-3" download>
+                                <i class="fas fa-file-csv me-1"></i> CSV
+                            </a>
+                            <a href="{% static 'samples/sample_portfolio.xlsx' %}"
+                                class="btn btn-sm btn-outline-secondary px-3" download>
+                                <i class="fas fa-file-excel me-1"></i> Excel
+                            </a>
+                            {% else %}
+                            <a href="{% static 'samples/sample_pnl.csv' %}"
+                                class="btn btn-sm btn-outline-secondary px-3" download>
+                                <i class="fas fa-file-csv me-1"></i> CSV
+                            </a>
+                            <a href="{% static 'samples/sample_pnl.xlsx' %}"
+                                class="btn btn-sm btn-outline-secondary px-3" download>
+                                <i class="fas fa-file-excel me-1"></i> Excel
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input[type="file"] {
+        padding: 0.5rem;
+        background-color: #f8fafc;
+        border: 1px dashed #cbd5e0;
+        border-radius: 8px;
+        width: 100%;
+    }
+</style>
+{% endblock %}

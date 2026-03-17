@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NPITS > Net Profit Investment Tracking System</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <!-- Favicon -->
+  {% load static %}
+  <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+  <!-- Custom CSS -->
+  <style>
+    :root {
+      --primary-color: #003D7C;
+      --secondary-color: #0056b3;
+      --bg-light: #f4f7f9;
+      --text-dark: #1a1e21;
+      --text-muted: #6c757d;
+      --success-green: #008D4C;
+      --danger-red: #D62A2D;
+      --warning-yellow: #ffc107;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+      letter-spacing: -0.01em;
+    }
+
+    .navbar {
+      background-color: var(--primary-color) !important;
+      padding: 0.75rem 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-size: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+
+    .navbar-brand img.brand-logo {
+      height: 48px;
+      width: 48px;
+      object-fit: contain;
+      background: #f8fafc;
+      padding: 4px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .navbar-brand:hover img.brand-logo {
+      transform: scale(1.1) rotate(-3deg);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand-text-wrapper {
+      line-height: 1.1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .brand-subtitle {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.8);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: -2px;
+    }
+
+    .nav-link {
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      padding-left: 1.25rem !important;
+      padding-right: 1.25rem !important;
+    }
+
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      font-weight: 600;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
+    }
+
+    .status-sell {
+      color: var(--danger-red);
+      font-weight: 700;
+    }
+
+    .status-buy {
+      color: var(--success-green);
+      font-weight: 700;
+    }
+
+    .status-hold {
+      color: var(--warning-yellow);
+      font-weight: 700;
+    }
+
+    .status-reduce {
+      color: #fd7e14;
+      font-weight: 700;
+    }
+
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Layout adjustments */
+    .main-content {
+      padding-top: 2rem;
+      padding-bottom: 4rem;
+    }
+
+    footer {
+      background-color: #fff;
+      border-top: 1px solid #e9ecef;
+      padding: 2rem 0;
+      margin-top: 4rem;
+      color: var(--text-muted);
+    }
+
+    /* Notification Styling */
+    .nav-item-dashboard {
+      position: relative;
+    }
+
+    .badge-fbi {
+      position: absolute;
+      top: -2px;
+      right: -8px;
+      background-color: var(--danger-red);
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 50%;
+      min-width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .sell-alert-icon {
+      color: #ffc107;
+      font-size: 0.8rem;
+      margin-left: 2px;
+      animation: pulse-sm 2s infinite;
+    }
+
+    @keyframes pulse-sm {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-dark mb-0">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'landing' %}">
+        {% load static %}
+        <img src="{% static 'images/logo.png' %}" alt="NPITS Logo" class="brand-logo me-2">
+        <div class="brand-text-wrapper">
+          <div class="brand-title">NPITS</div>
+          <div class="brand-subtitle d-none d-md-block">Investment Tracking System</div>
+        </div>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'strategy' %}">Strategy</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'mf_guide' %}">MF Guide</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'stock_guide' %}">Stock IPO</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'etf_guide' %}">ETF Guide</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'nps_guide' %}">NPS Guide</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'donation' %}">DONATION</a>
+          </li>
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link nav-item-dashboard" href="{% url 'dashboard' %}">
+              Dashboard
+              {% if total_signal_count > 0 %}
+              <span class="badge-fbi">{{ total_signal_count }}</span>
+              {% endif %}
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link pe-0" href="{% url 'edit_profile' %}">
+              Hello, <strong>{{ user.profile.full_name|default:user.username }}</strong>
+            </a>
+          </li>
+          <li class="nav-item ms-2">
+            <form method="post" action="{% url 'logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-light btn-sm px-3 rounded-pill">Logout</button>
+            </form>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">Login</a>
+          </li>
+          <li class="nav-item ms-lg-2">
+            <a class="btn btn-light btn-sm px-4 rounded-pill fw-bold" href="{% url 'register' %}"
+              style="color: var(--primary-color);">Sign Up</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container main-content">
+    {% if messages %}
+    <div class="row justify-content-center">
+      <div class="col-md-10">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm mb-4" role="alert"
+          style="border-radius: 12px;">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% block content %}
+    {% endblock %}
+  </div>
+
+  <footer class="py-5 bg-white border-top mt-5">
+    <div class="container text-center">
+      <div class="footer-logo mb-4 animate__animated animate__fadeIn">
+        <img src="{% static 'images/logo.png' %}" alt="NPITS Logo" style="height: 80px; width: auto;" class="rounded-3 shadow-sm">
+      </div>
+      <h4 class="fw-bold mb-2" style="color: var(--primary-color);">NPITS</h4>
+      <p class="text-muted mb-4 mx-auto" style="max-width: 600px;">
+        <strong>Net Profit Investment Tracking System</strong> is a rule-based platform designed for disciplined wealth creation. 
+        We provide transparent benchmarks and automated signals to help you manage your portfolio with clarity and confidence.
+      </p>
+      <div class="d-flex justify-content-center gap-4 mb-4">
+        <a href="{% url 'landing' %}" class="text-decoration-none text-muted small fw-bold text-uppercase">Home</a>
+        <a href="{% url 'strategy' %}" class="text-decoration-none text-muted small fw-bold text-uppercase">Strategy</a>
+        <a href="{% url 'about_project' %}" class="text-decoration-none text-muted small fw-bold text-uppercase">Docs</a>
+      </div>
+      <hr class="my-4 opacity-25" style="max-width: 800px; margin: 0 auto;">
+      <p class="mb-0 text-muted small">© 2026 NPITS. Rule-based investing for disciplined wealth creation.</p>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    (function () {
+      const SYNC_INTERVAL = 60 * 1000; // 1 minute
+      const LAST_SYNC_KEY = 'npits_last_sync_time';
+      const now = Date.now();
+      const lastSync = localStorage.getItem(LAST_SYNC_KEY);
+
+      if (!lastSync || (now - lastSync) > SYNC_INTERVAL) {
+        // Trigger sync
+        fetch('{% url "sync_data_api" %}')
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'success' || data.status === 'skipped') {
+              localStorage.setItem(LAST_SYNC_KEY, now);
+              console.log('Sync status:', data.status);
+            }
+          })
+          .catch(error => console.error('Sync failed:', error));
+      }
+    })();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,1157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --report-bg: #fdfdfd;
+        --report-text: #2c3e50;
+        --report-accent: #003D7C;
+        --border-color: #dee2e6;
+        --sidebar-bg: #f8f9fa;
+    }
+
+    .report-container {
+        display: flex;
+        background: var(--report-bg);
+        color: var(--report-text);
+        line-height: 1.6;
+        min-height: 80vh;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .report-sidebar {
+        width: 280px;
+        background: var(--sidebar-bg);
+        padding: 2rem 1.5rem;
+        border-right: 1px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .report-sidebar h5 {
+        font-weight: 700;
+        color: var(--report-accent);
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.9rem;
+    }
+
+    .report-sidebar ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .report-sidebar li {
+        margin-bottom: 0.75rem;
+    }
+
+    .report-sidebar a {
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        display: block;
+        padding: 0.25rem 0;
+    }
+
+    .report-sidebar a:hover, .report-sidebar a.active {
+        color: var(--report-accent);
+        font-weight: 600;
+        transform: translateX(5px);
+    }
+
+    .report-content {
+        flex: 1;
+        padding: 4rem 6rem;
+        max-width: 900px;
+        background: #fff;
+    }
+
+    .report-section {
+        margin-bottom: 6rem;
+        scroll-margin-top: 2rem;
+    }
+
+    .report-section h2 {
+        color: var(--report-accent);
+        font-weight: 800;
+        border-bottom: 3px solid var(--report-accent);
+        padding-bottom: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 2.25rem;
+    }
+
+    .report-section h3 {
+        font-weight: 700;
+        margin-top: 2.5rem;
+        margin-bottom: 1.25rem;
+        color: #34495e;
+    }
+
+    .report-section p {
+        margin-bottom: 1.5rem;
+        text-align: justify;
+    }
+
+    :root {
+        --report-bg: #f8f9fa;
+        --report-text: #212529;
+        --report-accent: #003D7C;
+        --report-accent-light: rgba(0, 61, 124, 0.1);
+    }
+    body {
+        background-color: var(--report-bg);
+        color: var(--report-text);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        position: relative;
+    }
+    .report-header {
+        background: white;
+        padding: 3rem 0;
+        border-bottom: 2px solid var(--report-accent);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    /* ... existing report styles ... */
+    .diagram-box {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        text-align: center;
+    }
+    .mermaid {
+        overflow-x: auto;
+        display: flex;
+        justify-content: center;
+    }
+    .mermaid:hover {
+        cursor: pointer;
+        opacity: 0.9;
+        transition: opacity 0.2s;
+    }
+
+    /* ERM Modal Styles */
+    .erm-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.85);
+        backdrop-filter: blur(4px);
+    }
+    .erm-modal-content {
+        background-color: white;
+        margin: 2% auto;
+        padding: 30px;
+        border-radius: 12px;
+        width: 95%;
+        max-width: 1600px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        position: relative;
+    }
+    .erm-modal-close {
+        color: #aaa;
+        position: absolute;
+        top: 15px;
+        right: 25px;
+        font-size: 35px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10;
+    }
+    .erm-modal-close:hover,
+    .erm-modal-close:focus {
+        color: var(--report-accent);
+        text-decoration: none;
+        cursor: pointer;
+    }
+    /* Keep modal SVG crisp and responsive but allowed to be very large */
+    .erm-modal-content svg {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 85vh;
+    }
+
+    .code-block {
+        background: #2b2b2b;
+        color: #f8f8f2;}
+
+    .code-block {
+        background: #282c34;
+        color: #abb2bf;
+        padding: 1.5rem;
+        border-radius: 8px;
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 0.85rem;
+        margin: 1.5rem 0;
+        white-space: pre-wrap;
+    }
+
+    .test-case-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2rem 0;
+    }
+
+    .test-case-table th, .test-case-table td {
+        border: 1px solid var(--border-color);
+        padding: 1rem;
+        font-size: 0.85rem;
+    }
+
+    .test-case-table th {
+        background: var(--sidebar-bg);
+        font-weight: 700;
+    }
+
+    .page-number {
+        float: right;
+        color: var(--text-muted);
+        font-weight: 400;
+        font-size: 0.9rem;
+    }
+
+    /* DFD Diagram Styling */
+    .dfd-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 20px;
+        background: #fdfdfd;
+        border-radius: 8px;
+    }
+
+    .dfd-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        width: 100%;
+        position: relative;
+    }
+
+    .dfd-entity, .dfd-process, .dfd-store {
+        padding: 15px 25px;
+        border: 2px solid var(--report-accent);
+        background: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: center;
+        min-width: 140px;
+        box-shadow: 4px 4px 0px rgba(0, 61, 124, 0.1);
+    }
+
+    .dfd-entity {
+        border-radius: 4px;
+        background: #eef2f7;
+    }
+
+    .dfd-process {
+        border-radius: 50px;
+        background: #fff;
+    }
+
+    .dfd-store {
+        border-right: none;
+        border-left: none;
+        background: #f9f9f9;
+        position: relative;
+    }
+
+    .dfd-arrow-v {
+        width: 2px;
+        height: 30px;
+        background: var(--report-accent);
+        position: relative;
+    }
+
+    .dfd-arrow-v::after {
+        content: "▼";
+        position: absolute;
+        bottom: -10px;
+        left: -6px;
+        color: var(--report-accent);
+        font-size: 12px;
+    }
+
+    .dfd-label {
+        font-size: 0.75rem;
+        color: #666;
+        position: absolute;
+        white-space: nowrap;
+    }
+
+    @media print {
+        .report-sidebar { display: none; }
+        .report-content { padding: 0; }
+        .report-container { box-shadow: none; border-radius: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0 animate__animated animate__fadeIn">
+    <div class="report-container">
+        <!-- Sidebar Navigation -->
+        <nav class="report-sidebar d-none d-lg-block">
+            <h5>Table of Contents</h5>
+            <ul>
+                <li><a href="#title">1. Title of the Project</a></li>
+                <li><a href="#intro">2. Introduction & Objectives</a></li>
+                <li><a href="#category">3. Project Category</a></li>
+                <li><a href="#srs">4. Tools & Requirements</a></li>
+                <li><a href="#problem">5. Problem Definition</a></li>
+                <li><a href="#literature">6. Literature Review & Planning</a></li>
+                <li><a href="#scope">7. Scope of the Solution</a></li>
+                <li><a href="#analysis">8. Analysis</a>
+                    <ul class="ms-3 list-unstyled" style="font-size: 0.75rem;">
+                        <li><a href="#dfd0">8.1 DFD Level 0</a></li>
+                        <li><a href="#dfd1">8.2 DFD Level 1</a></li>
+                        <li><a href="#dfd2">8.3 DFD Level 2</a></li>
+                    </ul>
+                </li>
+                <li><a href="#dbdesign">9. Database Design</a></li>
+                <li><a href="#modules">10. System Structure & Modules</a></li>
+                <li><a href="#network">11. Network Architecture</a></li>
+                <li><a href="#security">12. Security Mechanisms</a></li>
+                <li><a href="#future">13. Future Scope</a></li>
+                <li><a href="#biblio">14. Bibliography</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="report-content">
+            <div class="text-center mb-5">
+                <h1 class="display-3 fw-bold text-primary">NPITS</h1>
+                <p class="lead">Net Profit Investment Tracking System</p>
+                <div class="mt-4">
+                    <span class="badge bg-primary px-3 py-2">About Project Documentation</span>
+                    <span class="ms-2 text-muted">Version 1.2.0 | 2026</span>
+                </div>
+            </div>
+
+            <!-- SECTION 1: TITLE OF THE PROJECT -->
+            <section id="title" class="report-section">
+                <h2>1. Title of the Project <span class="page-number">P.01</span></h2>
+                <p>The project should have a clear, concise, and meaningful title that reflects its main objective and functionality. A well-chosen title helps in immediately conveying the purpose of the project to the reader.</p>
+                <div class="diagram-box bg-white text-center">
+                    <h3 class="text-primary fw-bold mb-2" style="font-size: 2rem;">NPITS</h3>
+                    <p class="lead mb-0">Net Profit Investment Tracking System</p>
+                    <p class="text-muted small mt-2">A comprehensive financial technology solution for granular lot-based investment tracking, multi-strategy portfolio management, and rule-based advisory generation.</p>
+                </div>
+            </section>
+
+            <!-- SECTION 2: INTRODUCTION AND OBJECTIVES -->
+            <section id="intro" class="report-section">
+                <h2>2. Introduction and Objectives <span class="page-number">P.04</span></h2>
+
+                <h3>2.1 Introduction</h3>
+                <p>The introduction provides an overview of the project, explaining the context, motivation, and significance of developing the system. It outlines the problem domain and describes how the project addresses real-world challenges or improves existing solutions.</p>
+                <p>The Net Profit Investment Tracking System (NPITS) is an advanced financial technology solution developed to bridge the gap between complex investment strategies and retail execution. In today's volatile equity markets, the difference between a successful investor and an amateur often lies in the precision of their data and the discipline of their rule-based approach. NPITS addresses the "Aggregation Paradox" — most brokerage platforms show a consolidated average price, which hides the profitability of individual stock "lots." For investors employing FIFO (First-In-First-Out) taxation or lot-based profit booking, this abstraction is a significant hurdle.</p>
+
+                <h3>2.2 Objectives</h3>
+                <p>The objectives define the goals that the project aims to achieve:</p>
+                <ol>
+                    <li><strong>Designing an Efficient, User-Friendly System</strong>: Implement a "Dashboard-First" interface that enables investors to view critical Buy Signals within seconds of logging in.</li>
+                    <li><strong>Automating Manual Processes</strong>: Build robust connectors for CSV data and Google Sheets to ensure data parity without manual entry, automating the calculation of "Buy Gaps" and "Target Capitalization."</li>
+                    <li><strong>Improving Data Accuracy & Security</strong>: Implement a strict FIFO engine that manages <code>remaining_quantity</code> at the transaction level with <code>Decimal</code> arithmetic for financial precision.</li>
+                    <li><strong>Enhancing Accessibility & Scalability</strong>: Enable investors to separate their portfolio into 'Quant', 'Flexi', and 'Pyramid' strategies, each with its own health metrics.</li>
+                    <li><strong>Demonstrating Practical Application</strong>: Apply theoretical knowledge of software engineering, database design, and financial computing to solve a real-world investment tracking challenge.</li>
+                </ol>
+            </section>
+
+            <!-- SECTION 3: PROJECT CATEGORY -->
+            <section id="category" class="report-section">
+                <h2>3. Project Category <span class="page-number">P.10</span></h2>
+                <p>The project should be classified under a relevant category based on its technology domain and problem area. The chosen category guides the methodology, tools, and implementation techniques for the project.</p>
+                <p>NPITS is categorized under <strong>Web Development</strong> with elements of <strong>Relational Database Management System (RDBMS)</strong> and <strong>Data Science</strong>.</p>
+
+                <h3>3.1 Possible Project Categories</h3>
+                <table class="test-case-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Relevance to NPITS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Relational Database Management System (RDBMS)</td><td class="text-success fw-bold">✔ Primary — FIFO ledger, transaction management</td></tr>
+                        <tr><td>Object-Oriented Programming (OOPS)</td><td class="text-success fw-bold">✔ Core — Django models, class-based views</td></tr>
+                        <tr><td>Web Development</td><td class="text-success fw-bold">✔ Primary — Full-stack Django application</td></tr>
+                        <tr><td>Data Science</td><td>Partial — Portfolio analytics and signal generation</td></tr>
+                        <tr><td>Networking</td><td>Partial — API integrations, real-time LTP sync</td></tr>
+                        <tr><td>Artificial Intelligence (AI)</td><td>Future — Planned LLM-based sentiment analysis</td></tr>
+                        <tr><td>Mobile Computing</td><td>Partial — TWA (Trusted Web Activity) support</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- SECTION 4: TOOLS/PLATFORM, HARDWARE AND SOFTWARE REQUIREMENTS -->
+            <section id="srs" class="report-section">
+                <h2>4. Tools/Platform, Hardware & Software Requirements <span class="page-number">P.15</span></h2>
+
+                <h3>4.1 Development Tools and Platforms</h3>
+                <table class="test-case-table">
+                    <thead><tr><th>Component</th><th>Technology Used</th></tr></thead>
+                    <tbody>
+                        <tr><td>Programming Language</td><td>Python 3.10+</td></tr>
+                        <tr><td>Web Framework</td><td>Django 4.x</td></tr>
+                        <tr><td>Frontend</td><td>HTML5, CSS3 (Vanilla), Bootstrap 5, JavaScript</td></tr>
+                        <tr><td>Database</td><td>MySQL (Production) / SQLite (Development)</td></tr>
+                        <tr><td>Charting</td><td>Chart.js, Mermaid.js</td></tr>
+                        <tr><td>Development IDE</td><td>Visual Studio Code</td></tr>
+                        <tr><td>Version Control</td><td>Git</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>4.2 Hardware Requirements</h3>
+                <ul>
+                    <li><strong>Processor</strong>: Intel i3/i5 or higher</li>
+                    <li><strong>RAM</strong>: 4GB or more</li>
+                    <li><strong>Storage</strong>: Minimum 20GB free space</li>
+                    <li><strong>Network</strong>: Internet connectivity for APIs and deployment</li>
+                </ul>
+
+                <h3>4.3 Software Requirements</h3>
+                <ul>
+                    <li><strong>Operating System</strong>: Windows, Linux, or macOS</li>
+                    <li><strong>Web Browser</strong>: Chrome 90+, Firefox, Edge</li>
+                    <li><strong>Runtime Environments</strong>: Python 3.10+, pip, virtualenv</li>
+                    <li><strong>Database Server</strong>: MySQL 8.0+ / SQLite 3</li>
+                    <li><strong>Web Server</strong>: IIS / Nginx / Apache (for production deployment)</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 5: PROBLEM DEFINITION AND REQUIREMENT SPECIFICATIONS -->
+            <section id="problem" class="report-section">
+                <h2>5. Problem Definition & Requirement Specifications <span class="page-number">P.20</span></h2>
+
+                <h3>5.1 Problem Definition</h3>
+                <p>Most brokerage platforms show a consolidated average price, which hides the profitability of individual stock "lots." Investors employing FIFO taxation or lot-based profit booking face significant hurdles in tracking their true net profit per transaction. Additionally, there is no unified tool that advises investors on <em>when to exit</em> based on their specific average cost vs. target, combining real-time market data with rule-based strategy logic.</p>
+
+                <h3>5.2 Functional Requirements</h3>
+                <ul>
+                    <li><strong>User Registration & Authentication</strong>: Custom registration with OTP-based email verification and social login (Google, GitHub, Apple).</li>
+                    <li><strong>Data Entry, Retrieval & Storage</strong>: Portfolio upload via CSV, Google Sheets sync, and manual entry with FIFO-based lot tracking.</li>
+                    <li><strong>Reporting & Analytics</strong>: Real-time P&L dashboards, strategy-wise distribution reports, and signal generation.</li>
+                    <li><strong>Notifications & Alerts</strong>: Buy/Sell/Reduce signal notifications displayed in the navbar with badge counts.</li>
+                    <li><strong>Administrative Control</strong>: Instrument verification, ticker symbol management, and user management via Django Admin.</li>
+                </ul>
+
+                <h3>5.3 Technical Specifications</h3>
+                <ul>
+                    <li><strong>Programming Language & Platform</strong>: Python / Django on Windows IIS / Linux Nginx</li>
+                    <li><strong>Database Design</strong>: Normalized relational schema with ACID-compliant transactions</li>
+                    <li><strong>API Integration</strong>: External LTP feeds for real-time price updates</li>
+                    <li><strong>Security Protocols</strong>: CSRF protection, parameterized queries, role-based access control, data encryption</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 6: LITERATURE REVIEW, PROJECT PLANNING AND SCHEDULING -->
+            <section id="literature" class="report-section">
+                <h2>6. Literature Review, Planning & Scheduling <span class="page-number">P.28</span></h2>
+
+                <h3>6.1 Literature Review</h3>
+                <p>A review of existing investment tracking platforms (Zerodha Console, Groww Portfolio, MoneyControl) revealed that while they provide portfolio overview, they lack lot-level FIFO tracking and rule-based advisory capabilities. Academic literature on portfolio optimization (Markowitz Mean-Variance model) and FIFO accounting methods informed the system's core design.</p>
+
+                <h3>6.2 Project Planning and Scheduling</h3>
+                <p>NPITS followed a 16-week development cycle using Agile/Scrum methodologies with 2-week sprints. Phases include:</p>
+                <ol>
+                    <li>Requirement Analysis</li>
+                    <li>System Design</li>
+                    <li>Implementation</li>
+                    <li>Testing</li>
+                    <li>Deployment</li>
+                    <li>Documentation</li>
+                </ol>
+
+                <h3>6.3 Gantt Chart</h3>
+                <div class="diagram-box">
+                    <div class="d-flex flex-column gap-2 text-start">
+                        <div class="d-flex align-items-center">
+                            <span style="width: 150px;" class="small">Analysis</span>
+                            <div class="bg-primary flex-grow-1" style="height: 10px; max-width: 10%;"></div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span style="width: 150px;" class="small">Database Design</span>
+                            <div class="bg-primary flex-grow-1 ms-2" style="height: 10px; max-width: 15%; margin-left: 10% !important;"></div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span style="width: 150px;" class="small">Core Engine</span>
+                            <div class="bg-primary flex-grow-1 ms-2" style="height: 10px; max-width: 40%; margin-left: 25% !important;"></div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span style="width: 150px;" class="small">Testing & Fixes</span>
+                            <div class="bg-primary flex-grow-1 ms-2" style="height: 10px; max-width: 15%; margin-left: 65% !important;"></div>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-3">Figure 6.1: NPITS Development Gantt Chart</small>
+                </div>
+
+                <h3>6.4 PERT Chart Analysis</h3>
+                <p>Critical paths were identified in the <strong>FIFO Logic Module</strong> and the <strong>External Sync API</strong>. Delay in these modules would have caused a 3-week slippage in the project delivery. The PERT analysis illustrates project workflow and critical path dependencies across all development phases.</p>
+            </section>
+
+            <!-- SECTION 7: SCOPE OF THE SOLUTION -->
+            <section id="scope" class="report-section">
+                <h2>7. Scope of the Solution <span class="page-number">P.33</span></h2>
+                <p>This section defines the boundaries and limitations of the project to ensure focused development and prevent scope creep.</p>
+
+                <h3>7.1 Features Included</h3>
+                <ul>
+                    <li>FIFO-based lot tracking and portfolio management</li>
+                    <li>Multi-strategy portfolio silos (Quant, Flexi, Pyramid)</li>
+                    <li>Real-time LTP synchronization with external APIs</li>
+                    <li>Rule-based Buy/Sell/Reduce signal advisory</li>
+                    <li>CSV upload and Google Sheets data sync</li>
+                    <li>P&L dashboards with visual analytics</li>
+                    <li>Social login and OTP-based authentication</li>
+                </ul>
+
+                <h3>7.2 Target Users</h3>
+                <p>Retail equity investors and individual traders in the Indian stock market who follow lot-based investment strategies.</p>
+
+                <h3>7.3 Limitations & Assumptions</h3>
+                <ul>
+                    <li>No direct broker API integration in the current version (data is uploaded via CSV/Google Sheets)</li>
+                    <li>LTP data depends on external feed availability and may have minor delays</li>
+                    <li>System is designed for equity instruments only (no derivatives/commodities)</li>
+                    <li>Assumes users follow FIFO-based accounting methodology</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 8: ANALYSIS -->
+            <section id="analysis" class="report-section">
+                <h2>8. Analysis <span class="page-number">P.35</span></h2>
+                <p>This section includes detailed system modeling using diagrams and analytical tools to represent the system's processes, data flow, and entity relationships.</p>
+
+                <h3>8.1 Entity-Relationship (ER) Diagram</h3>
+                <p class="text-muted small mb-0"><i class="fas fa-search-plus me-1"></i> <em>Click the diagram to enlarge it for better readability.</em></p>
+                <div class="diagram-box">
+                    <div class="mermaid" id="erm-source" onclick="openErmModal()">
+erDiagram
+    USER {
+        int id
+        string username
+        string email
+        string password
+    }
+    PROFILE {
+        string full_name
+        string mobile_number
+        date date_of_birth
+        string gender
+        string investor_type
+    }
+    INSTRUMENT {
+        string name
+        string symbol
+        string isin
+        boolean is_verified
+        decimal last_price
+    }
+    PORTFOLIO {
+        int quantity
+        decimal avg_cost
+        decimal ltp
+    }
+    TRANSACTION {
+        string transaction_type
+        int quantity
+        decimal price
+        date date
+    }
+    PNL_STATEMENT {
+        date exit_date
+        int quantity
+        decimal realized_profit
+    }
+    WATCHLIST {
+        datetime added_at
+        text notes
+    }
+    DIVIDEND {
+        decimal amount
+        date received_date
+    }
+    INVESTMENT_GOAL {
+        string name
+        decimal target_amount
+        date target_date
+        decimal current_amount
+    }
+    CORPORATE_ACTION {
+        string action_type
+        int ratio_numerator
+        int ratio_denominator
+        date announcement_date
+    }
+    OTP {
+        string code
+        datetime created_at
+    }
+
+    USER ||--o| PROFILE : "has"
+    USER ||--o{ PORTFOLIO : "owns"
+    USER ||--o{ TRANSACTION : "executes"
+    USER ||--o{ PNL_STATEMENT : "has"
+    USER ||--o{ WATCHLIST : "tracks"
+    USER ||--o{ DIVIDEND : "receives"
+    USER ||--o{ INVESTMENT_GOAL : "sets"
+    USER ||--o{ OTP : "uses"
+
+    INSTRUMENT ||--o{ PORTFOLIO : "contained in"
+    INSTRUMENT ||--o{ TRANSACTION : "referenced by"
+    INSTRUMENT ||--o{ PNL_STATEMENT : "referenced by"
+    INSTRUMENT ||--o{ WATCHLIST : "referenced by"
+    INSTRUMENT ||--o{ DIVIDEND : "referenced by"
+    INSTRUMENT ||--o{ CORPORATE_ACTION : "has events"
+
+    STRATEGY ||--o{ STRATEGY_STOCK : "contains"
+                    </div>
+                    <small class="text-muted d-block mt-2">Figure 8.1: Detailed Entity Relationship Diagram</small>
+                </div>
+
+                <h3 id="dfd0">8.2 DFD Level 0 (Context Diagram)</h3>
+                <p>The Level 0 diagram shows the system boundaries and external entities interacting with NPITS.</p>
+                <div class="diagram-box">
+                    <div class="dfd-container">
+                        <div class="dfd-row">
+                            <div class="dfd-entity">User / Investor</div>
+                            <div style="width: 100px; height: 2px; background: var(--report-accent); position: relative;">
+                                <div class="dfd-label" style="top: -20px; left: 10px;">Login / Portfolio Data</div>
+                                <div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div>
+                            </div>
+                            <div class="dfd-process">1.0 NPITS System</div>
+                            <div style="width: 100px; height: 2px; background: var(--report-accent); position: relative;">
+                                <div class="dfd-label" style="top: -20px; left: 10px;">Price Feeds / Data</div>
+                                <div style="position: absolute; left: 0; top: -7px; transform: rotate(180deg); color: var(--report-accent);">▶</div>
+                            </div>
+                            <div class="dfd-entity">Stock Market / APIs</div>
+                        </div>
+                        <div class="dfd-row mt-3">
+                             <div style="width: 140px;"></div>
+                             <div style="width: 2px; height: 40px; background: var(--report-accent); position: relative; margin-left: 175px;">
+                                <div class="dfd-label" style="left: 10px; top: 10px;">Buy/Sell Signals</div>
+                                <div style="position: absolute; top: -10px; left: -6px; transform: rotate(180deg); color: var(--report-accent);">▶</div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="dfd1">8.3 DFD Level 1 (Overview)</h3>
+                <p>Level 1 breaks down the system into its primary functional processes: Data Ingestion, Portfolio Accounting, and Advisory Generation.</p>
+                <div class="diagram-box">
+                    <div class="dfd-container">
+                        <div class="dfd-row">
+                            <div class="dfd-entity">User</div>
+                            <div style="width: 60px; height: 2px; background: var(--report-accent); position: relative;">
+                                <div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div>
+                            </div>
+                            <div class="dfd-process">1.0 Data Ingestion</div>
+                            <div style="width: 60px; height: 2px; background: var(--report-accent); position: relative;">
+                                <div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div>
+                            </div>
+                            <div class="dfd-store">D1: Transactions</div>
+                        </div>
+                        <div class="dfd-row">
+                            <div style="width: 140px;"></div>
+                            <div style="width: 2px; height: 30px; background: var(--report-accent); position: relative; margin-left: 45px;">
+                                <div style="position: absolute; bottom: -10px; left: -6px; color: var(--report-accent);">▼</div>
+                            </div>
+                        </div>
+                        <div class="dfd-row">
+                            <div style="width: 140px;"></div>
+                            <div class="dfd-process">2.0 Portfolio Accounting</div>
+                            <div style="width: 60px; height: 2px; background: var(--report-accent); position: relative;">
+                                <div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div>
+                            </div>
+                            <div class="dfd-store">D2: Portfolio Map</div>
+                        </div>
+                        <div class="dfd-row">
+                            <div style="width: 140px;"></div>
+                            <div style="width: 2px; height: 30px; background: var(--report-accent); position: relative; margin-left: 45px;">
+                                <div style="position: absolute; bottom: -10px; left: -6px; color: var(--report-accent);">▼</div>
+                            </div>
+                        </div>
+                        <div class="dfd-row">
+                            <div style="width: 140px;"></div>
+                            <div class="dfd-process">3.0 Advisory Engine</div>
+                            <div style="width: 60px; height: 2px; background: var(--report-accent); position: relative;">
+                                <div style="position: absolute; left: -60px; top: 0; width: 60px; height: 2px; background: var(--report-accent);"></div>
+                            </div>
+                            <div class="dfd-entity">Investor Dashboard</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="dfd2">8.4 DFD Level 2 (Process 2.0: Portfolio Engine)</h3>
+                <p>Level 2 drills into the FIFO calculation logic, showing how individual transaction lots are reconciled during a sale.</p>
+                <div class="diagram-box">
+                    <div class="dfd-container">
+                        <div class="dfd-row">
+                            <div class="dfd-store">D1: All Buys</div>
+                            <div style="width: 40px; height: 2px; background: var(--report-accent); position: relative;"><div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div></div>
+                            <div class="dfd-process">2.1 Sort Lots (FIFO)</div>
+                            <div style="width: 40px; height: 2px; background: var(--report-accent); position: relative;"><div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div></div>
+                            <div class="dfd-process">2.2 Map to Sales</div>
+                        </div>
+                        <div class="dfd-row mt-3">
+                            <div style="width: 180px;"></div>
+                            <div class="dfd-arrow-v"></div>
+                        </div>
+                        <div class="dfd-row mt-2">
+                             <div style="width: 180px;"></div>
+                             <div class="dfd-process">2.3 Update Remaining Qty</div>
+                             <div style="width: 40px; height: 2px; background: var(--report-accent); position: relative;"><div style="position: absolute; right: 0; top: -7px; color: var(--report-accent);">▶</div></div>
+                             <div class="dfd-store">D2: Updated Portfolio</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>8.5 UML Activity Diagram</h3>
+                <p>The activity diagram represents the workflow of a user uploading a CSV file and the system processing the portfolio data through the FIFO engine.</p>
+            </section>
+
+            <!-- SECTION 9: DATABASE DESIGN -->
+            <section id="dbdesign" class="report-section">
+                <h2>9. Database Design <span class="page-number">P.40</span></h2>
+                <p>A complete database design including table structures, keys, constraints, relationships, and normalization as per project requirements.</p>
+
+                <h3>9.1 Data Structure Tables</h3>
+                
+                <h4>9.1.1 User Master Table</h4>
+                <p>Stores core authentication and user profile data.</p>
+                <table class="test-case-table">
+                    <thead>
+                        <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td>Integer (PK)</td><td>Unique identifier for the user.</td></tr>
+                        <tr><td><code>username</code></td><td>String(150)</td><td>Unique login username.</td></tr>
+                        <tr><td><code>email</code></td><td>String(254)</td><td>User's email address for communication/OTP.</td></tr>
+                        <tr><td><code>password</code></td><td>String(128)</td><td>Hashed password (PBKDF2).</td></tr>
+                        <tr><td><code>investor_type</code></td><td>String(50)</td><td>Classification of the investor (Retail, HNI, etc.).</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>9.1.2 Portfolio Table</h4>
+                <p>Real-time aggregate snapshot of a user's holdings.</p>
+                <table class="test-case-table">
+                    <thead>
+                        <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td>Integer (PK)</td><td>Unique identifier for the portfolio record.</td></tr>
+                        <tr><td><code>user_id</code></td><td>Integer (FK)</td><td>Reference to the User Master table.</td></tr>
+                        <tr><td><code>instrument_id</code></td><td>Integer (FK)</td><td>Reference to the traded instrument.</td></tr>
+                        <tr><td><code>quantity</code></td><td>Decimal(15,2)</td><td>Total active aggregated quantity held.</td></tr>
+                        <tr><td><code>avg_cost</code></td><td>Decimal(15,2)</td><td>Weighted average buy price.</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>9.1.3 Holdings Table (Normalized Data Structure)</h4>
+                <p>Represents individual stock entities and their metadata.</p>
+                <table class="test-case-table">
+                    <thead>
+                        <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td>Integer (PK)</td><td>Unique identifier for the instrument.</td></tr>
+                        <tr><td><code>symbol</code></td><td>String(50)</td><td>Trading ticker symbol (e.g., RELIANCE).</td></tr>
+                        <tr><td><code>name</code></td><td>String(255)</td><td>Full company name.</td></tr>
+                        <tr><td><code>isin</code></td><td>String(12)</td><td>International Securities Identification Number.</td></tr>
+                        <tr><td><code>last_price</code></td><td>Decimal(15,2)</td><td>Latest synced market price (LTP).</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>9.1.4 Transaction Table</h4>
+                <p>Immutable ledger for all Buy/Sell activities, powering the FIFO engine.</p>
+                <table class="test-case-table">
+                    <thead>
+                        <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td>Integer (PK)</td><td>Unique identifier for the transaction.</td></tr>
+                        <tr><td><code>user_id</code></td><td>Integer (FK)</td><td>Reference to the User executing the trade.</td></tr>
+                        <tr><td><code>instrument_id</code></td><td>Integer (FK)</td><td>Reference to the Instrument traded.</td></tr>
+                        <tr><td><code>transaction_type</code></td><td>String(10)</td><td>Enum: 'BUY' or 'SELL'.</td></tr>
+                        <tr><td><code>quantity</code></td><td>Decimal(15,2)</td><td>Total traded volume.</td></tr>
+                        <tr><td><code>price</code></td><td>Decimal(15,2)</td><td>Execution price per unit.</td></tr>
+                        <tr><td><code>date</code></td><td>Date</td><td>Trade execution date.</td></tr>
+                        <tr><td><code>remaining_quantity</code></td><td>Decimal(15,2)</td><td>Quantity remaining in this specific lot (FIFO tracker).</td></tr>
+                    </tbody>
+                </table>
+
+                <h4>9.1.5 Admin / System Table</h4>
+                <p>System-level configurations and audit logs managed by platform administrators.</p>
+                <table class="test-case-table">
+                    <thead>
+                        <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td>Integer (PK)</td><td>Unique identifier for the system record.</td></tr>
+                        <tr><td><code>config_key</code></td><td>String(100)</td><td>Key name for the system property.</td></tr>
+                        <tr><td><code>config_value</code></td><td>Text</td><td>Value of the property (JSON or String).</td></tr>
+                        <tr><td><code>last_updated</code></td><td>DateTime</td><td>Timestamp of the last administrative change.</td></tr>
+                        <tr><td><code>updated_by</code></td><td>Integer (FK)</td><td>Reference to the Admin user who made the change.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>9.2 Class Diagram</h3>
+                <p>The class diagram represents the object-oriented structure of the NPITS application and how the central Django models interrelate in the application layer.</p>
+                <div class="diagram-box">
+                    <div class="mermaid">
+classDiagram
+    class User {
+        +int id
+        +String username
+        +login()
+        +logout()
+    }
+    class Profile {
+        +String investor_type
+        +String mobile
+        +update_profile()
+    }
+    class Portfolio {
+        +Decimal avg_cost
+        +Decimal quantity
+        +calculate_pnl()
+    }
+    class Transaction {
+        +String type
+        +Decimal quantity
+        +Decimal remaining_quantity
+        +Date trade_date
+        +execute_fifo()
+    }
+    class Instrument {
+        +String symbol
+        +Decimal ltp
+        +sync_price()
+    }
+
+    User "1" -- "1" Profile : has
+    User "1" -- "*" Portfolio : owns
+    User "1" -- "*" Transaction : makes
+    Instrument "1" -- "*" Portfolio : references
+    Instrument "1" -- "*" Transaction : referenced by
+                    </div>
+                </div>
+
+                <h3>9.3 Validation Rules (Applied on Data Structure)</h3>
+                <p>To assure Data Quality and Integrity across all tables, strict validation rules are enforced at the Data Structure boundary:</p>
+                <ul>
+                    <li><strong>Quantity Consistency</strong>: For any `Transaction`, `quantity > 0` and `remaining_quantity >= 0`. `remaining_quantity` can never exceed the original `quantity`.</li>
+                    <li><strong>Price Boundaries</strong>: Both `price` in Transactions and `avg_cost` in Portfolios must be `> 0.00`. Zero or negative prices are blocked at the ORM validation layer.</li>
+                    <li><strong>Duplicate Prevention (Composite Keys)</strong>: A unique constraint `UNIQUE(user_id, instrument_id)` is applied on the `Portfolio` table. A user can only have one active aggregated portfolio row per stock.</li>
+                    <li><strong>Transaction Type Integrity</strong>: `transaction_type` is restricted strictly to an Enum of `['BUY', 'SELL']`. Any other string will raise a validation exception.</li>
+                    <li><strong>Orphan Record Prevention</strong>: Cascading deletes are controlled. If an `Instrument` is removed by an Admin, it is flagged as `is_active=False` rather than hard-deleted to preserve mathematical integrity in the User's `Transaction` history.</li>
+                </ul>
+
+                <h3>9.4 Data Normalization</h3>
+                <p>The database schema is designed following the principles of database normalization up to the Third Normal Form (3NF) to minimize redundancy and prevent data anomalies.</p>
+                <ul>
+                    <li><strong>First Normal Form (1NF)</strong>: All table attributes contain atomic values. For example, the `USER` table separates `first_name` and `last_name` rather than a single combined name field, and the `PORTFOLIO` table uses a dedicated column for each distinct data point (quantity, avg_cost, etc.).</li>
+                    <li><strong>Second Normal Form (2NF)</strong>: All tables meet 1NF, and all non-key attributes are fully functional dependent on the primary key. In the `TRANSACTION` table, details like `price` and `quantity` depend entirely on the specific transaction `id`, separated from the instrument details which reside in the `INSTRUMENT` table linked by a foreign key.</li>
+                    <li><strong>Third Normal Form (3NF)</strong>: All tables meet 2NF, and there are no transitive functional dependencies. The system enforces this heavily: the `PORTFOLIO` table stores aggregated `avg_cost` and `total_quantity`, but the individual lot histories (which determine FIFO logic) are segregated into the `TRANSACTION` table. We derive Realized PnL dynamically rather than storing statically dependent values where possible, removing transitive dependencies.</li>
+                </ul>
+
+                <h3>9.5 Key Relationships & Constraints</h3>
+                <ul>
+                    <li><strong>Primary Keys</strong>: Auto-incrementing integer IDs for all core tables.</li>
+                    <li><strong>Foreign Keys</strong>: <code>user_id</code> references <code>auth_user(id)</code>, <code>instrument_id</code> references <code>core_instrument(id)</code>.</li>
+                    <li><strong>UNIQUE</strong>: <code>UNIQUE(user, instrument)</code> prevents duplicate stock entries for a single user.</li>
+                    <li><strong>CHECK</strong>: <code>CHECK(quantity >= 0)</code> ensures mathematical consistency in the portfolio.</li>
+                </ul>
+
+                <h3>9.6 SQL Creation Commands</h3>
+                <div class="code-block">
+CREATE TABLE "core_transaction" (
+    "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "quantity" decimal NOT NULL,
+    "remaining_quantity" decimal NOT NULL,
+    "price" decimal NOT NULL,
+    "date" date NOT NULL,
+    "instrument_id" bigint NOT NULL REFERENCES "core_instrument" ("id"),
+    "user_id" integer NOT NULL REFERENCES "auth_user" ("id")
+);
+CREATE INDEX "core_transaction_user_id" ON "core_transaction" ("user_id");
+                </div>
+            </section>
+
+            <!-- SECTION 10: SYSTEM STRUCTURE AND MODULES -->
+            <section id="modules" class="report-section">
+                <h2>10. System Structure & Modules <span class="page-number">P.55</span></h2>
+
+                <h3>10.1 Module Description</h3>
+                <p>The system is decomposed into highly cohesive, loosely coupled modules:</p>
+                <ul>
+                    <li><strong>Authentication Module</strong>: Custom implementation extending <code>AbstractUser</code>. Manages registration, OTP through SMTP, social login (Google, GitHub, Apple), and profile synchronization.</li>
+                    <li><strong>Portfolio Engine</strong>: The core calculator. Uses <code>Decimal</code> arithmetic for financial precision, avoiding floating-point errors. Implements the FIFO ledger for lot-based tracking.</li>
+                    <li><strong>Sync Controller</strong>: A specialized service that handles multi-source data ingestion (Google Sheets via URL, CSV Uploads) with data cleaning and validation.</li>
+                    <li><strong>Advisory Engine</strong>: Generates Buy/Sell/Reduce signals based on user-defined strategy rules and real-time LTP data.</li>
+                    <li><strong>Dashboard UI</strong>: A dynamic reporting layer using Chart.js for visualization and modern CSS for responsiveness.</li>
+                </ul>
+
+                <h3>10.2 Procedural Logic (FIFO Engine)</h3>
+                <p>When a user executes a SELL trade, the system follows this procedural flowchart:</p>
+                <div class="code-block">
+1. Fetch all BUY transactions for User ID where remaining_qty > 0.
+2. Sort by Date (ASC) and Created_At (ASC).
+3. Loop through transactions:
+   IF sell_qty <= tx.remaining_qty:
+      tx.remaining_qty -= sell_qty
+      Update Realized PnL
+      Break
+   ELSE:
+      sell_qty -= tx.remaining_qty
+      tx.remaining_qty = 0
+      Update Realized PnL
+      Continue
+                </div>
+
+                <h3>10.3 Data Structures</h3>
+                <p>Appropriate data structures used for each module:</p>
+                <ul>
+                    <li><strong>Ordered QuerySets</strong>: For FIFO sorting of transaction lots by date and creation time.</li>
+                    <li><strong>Aggregation Dictionaries</strong>: For grouping portfolio data by instrument and strategy.</li>
+                    <li><strong>DataFrames (Pandas)</strong>: For CSV and Google Sheets data ingestion and cleaning.</li>
+                </ul>
+
+                <h3>10.4 Implementation Methodology</h3>
+                <p>NPITS was developed using the <strong>Iterative Enhancement Model</strong> combined with Agile/Scrum methodologies. Unlike a traditional waterfall approach, this allowed releasing a functional "Dashboard" version early and then layering on complex "FIFO" and "Advisory" logic in subsequent iterations.</p>
+
+                <h3>10.5 Reports</h3>
+                <p>Reports generated by the system include:</p>
+                <ul>
+                    <li><strong>User Activity Reports</strong>: Transaction history, portfolio uploads, and login activity.</li>
+                    <li><strong>Portfolio Performance Reports</strong>: P&L statements, strategy-wise distribution, and signal summaries.</li>
+                    <li><strong>Administrative Summaries</strong>: Instrument verification status, user statistics, and system health.</li>
+                    <li><strong>Analytical Dashboards</strong>: Visual charts showing portfolio allocation, strategy performance, and market signals.</li>
+                </ul>
+                <div class="diagram-box bg-white text-start">
+                    <h5 class="border-bottom pb-2 mb-3">Strategy Distribution Report (Sample)</h5>
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-circle text-primary me-2"></i><strong>Quant Strategy:</strong> 45% (₹4.5L)</li>
+                                <li><i class="fas fa-circle text-success me-2"></i><strong>Pyramid Strategy:</strong> 35% (₹3.5L)</li>
+                                <li><i class="fas fa-circle text-warning me-2"></i><strong>Flexi Strategy:</strong> 20% (₹2.0L)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <svg width="150" height="150" viewBox="0 0 42 42" class="d-block mx-auto">
+                                <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" stroke-width="3"></circle>
+                                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#003D7C" stroke-width="3" stroke-dasharray="45 55" stroke-dashoffset="25"></circle>
+                                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#198754" stroke-width="3" stroke-dasharray="35 65" stroke-dashoffset="80"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 11: OVERALL NETWORK ARCHITECTURE -->
+            <section id="network" class="report-section">
+                <h2>11. Overall Network Architecture <span class="page-number">P.70</span></h2>
+                <p>The network architecture describes how different components of the NPITS system communicate and interact.</p>
+
+                <h3>11.1 Client-Server Model</h3>
+                <p>NPITS follows a traditional client-server architecture where the Django application serves as the backend server, and web browsers act as clients.</p>
+
+                <h3>11.2 Architecture Overview</h3>
+                <ul>
+                    <li><strong>Client Layer</strong>: Web browsers (Chrome, Firefox, Edge) accessing the application via HTTP/HTTPS.</li>
+                    <li><strong>Application Layer</strong>: Django application running on IIS (Windows) or Nginx (Linux) web server.</li>
+                    <li><strong>Database Layer</strong>: MySQL database server for persistent data storage with ACID-compliant transactions.</li>
+                    <li><strong>External APIs</strong>: Real-time LTP price feeds from stock market data providers.</li>
+                    <li><strong>Authentication Services</strong>: OAuth2 integration with Google, GitHub, and Apple for social login.</li>
+                </ul>
+
+                <h3>11.3 API & Web Services Integration</h3>
+                <ul>
+                    <li><strong>Google Sheets API</strong>: For portfolio data synchronization via public spreadsheet URLs.</li>
+                    <li><strong>SMTP Email Service</strong>: For OTP-based email verification and password reset.</li>
+                    <li><strong>Stock Market Data API</strong>: For real-time Last Traded Price (LTP) updates.</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 12: SECURITY MECHANISMS -->
+            <section id="security" class="report-section">
+                <h2>12. Security Mechanisms <span class="page-number">P.80</span></h2>
+                <p>Security is the cornerstone of any financial application. NPITS implements a multi-layered security architecture at multiple levels.</p>
+
+                <h3>12.1 Authentication & Authorization</h3>
+                <ul>
+                    <li><strong>Custom User Model</strong>: Extended <code>AbstractUser</code> with OTP-based email verification.</li>
+                    <li><strong>Social Login</strong>: OAuth2-based authentication via Google, GitHub, and Apple.</li>
+                    <li><strong>Session Management</strong>: Secure cookie-based sessions with Django's built-in session framework.</li>
+                </ul>
+
+                <h3>12.2 Role-Based Access Control</h3>
+                <ul>
+                    <li><strong>Investor Role</strong>: Can view dashboards, upload portfolios, and manage their own profile.</li>
+                    <li><strong>Admin Role</strong>: Can verify instruments, manage system-wide ticker symbols, and administer users.</li>
+                </ul>
+
+                <h3>12.3 Data Encryption & Secure Communication</h3>
+                <ul>
+                    <li><strong>At-Rest Encryption</strong>: Production MySQL environment supports TDE (Transparent Data Encryption).</li>
+                    <li><strong>In-Transit Encryption</strong>: HTTPS enforced for all client-server communication.</li>
+                    <li><strong>Password Hashing</strong>: Django's PBKDF2 algorithm with SHA256 hashing for password storage.</li>
+                </ul>
+
+                <h3>12.4 Input Validation & Attack Prevention</h3>
+                <ul>
+                    <li><strong>Parameterized Queries</strong>: Django ORM prevents SQL Injection by design, using prepared statements.</li>
+                    <li><strong>CSRF Protection</strong>: Django's built-in CSRF middleware protects against cross-site request forgery.</li>
+                    <li><strong>XSS Prevention</strong>: Template auto-escaping prevents cross-site scripting attacks.</li>
+                    <li><strong>Referential Integrity</strong>: Foreign key constraints ensure data consistency and prevent orphan records.</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 13: FUTURE SCOPE AND ENHANCEMENTS -->
+            <section id="future" class="report-section">
+                <h2>13. Future Scope & Enhancements <span class="page-number">P.90</span></h2>
+                <p>The NPITS project is envisioned as a long-term companion for retail investors. Potential improvements and expansions include:</p>
+                <ul>
+                    <li><strong>Integration with AI/ML Models</strong>: Integration of LLMs to analyze news sentiment for portfolio stocks and provide intelligent investment recommendations.</li>
+                    <li><strong>Mobile Application Development</strong>: Native mobile apps or enhanced PWA/TWA support for seamless mobile experience.</li>
+                    <li><strong>Cloud-Based Deployment</strong>: Migration to cloud infrastructure (AWS/GCP) for improved scalability and reliability.</li>
+                    <li><strong>Advanced Analytics & Dashboards</strong>: More sophisticated charting, sector-wise analysis, and predictive analytics.</li>
+                    <li><strong>Broker API Bridges</strong>: Direct polling of trade books from Zerodha/Kite/AngelOne for automated portfolio sync.</li>
+                    <li><strong>Taxation Reports</strong>: Automated generation of Capital Gains reports for IT-filing compliance.</li>
+                    <li><strong>Scalability for Larger Systems</strong>: Support for multi-asset classes (mutual funds, bonds, derivatives) and institutional-grade portfolio management.</li>
+                </ul>
+            </section>
+
+            <!-- SECTION 14: BIBLIOGRAPHY -->
+            <section id="biblio" class="report-section">
+                <h2>14. Bibliography <span class="page-number">P.95</span></h2>
+                <p>All references listed in standard format, including books, journals, research papers, and official documentation.</p>
+
+                <h3>14.1 Books & Journals</h3>
+                <ol>
+                    <li><strong>Two Scoops of Django 3.x</strong> — Daniel Roy Greenfeld & Audrey Roy Greenfeld (Prentice Hall).</li>
+                    <li><strong>Test-Driven Development with Python</strong> — Harry Percival (O'Reilly Media).</li>
+                    <li><strong>Clean Code: A Handbook of Agile Software Craftsmanship</strong> — Robert C. Martin.</li>
+                    <li><strong>Financial Engineering with Python</strong> — Yves Hilpisch (O'Reilly).</li>
+                    <li><strong>Software Engineering: A Practitioner's Approach</strong> — Roger S. Pressman (McGraw-Hill).</li>
+                </ol>
+
+                <h3>14.2 Official Documentation & Online Resources</h3>
+                <ol>
+                    <li><strong>Django Documentation</strong> — official djangoproject.com resources (2025-2026).</li>
+                    <li><strong>Bootstrap 5 Documentation</strong> — getbootstrap.com.</li>
+                    <li><strong>Chart.js Documentation</strong> — chartjs.org.</li>
+                    <li><strong>Python Official Documentation</strong> — docs.python.org.</li>
+                    <li><strong>MySQL Reference Manual</strong> — dev.mysql.com/doc.</li>
+                </ol>
+                </ol>
+            </section>
+
+            <!-- ERM Enlarge Modal -->
+            <div id="ermModal" class="erm-modal">
+                <div class="erm-modal-content">
+                    <span class="erm-modal-close" onclick="closeErmModal()">&times;</span>
+                    <h4 class="text-center text-primary mb-4">Entity Relationship Model (Enlarged)</h4>
+                    <div id="erm-modal-body" class="d-flex justify-content-center">
+                        <!-- Cloned mermaid SVG will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: 'neutral',
+        securityLevel: 'loose',
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+        er: { useMaxWidth: true, layoutDirection: 'TB' }
+    });
+</script>
+<script>
+    // Smooth scroll and active link tracking
+    document.querySelectorAll('.report-sidebar a').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            target.scrollIntoView({ behavior: 'smooth' });
+            
+            // Update active state
+            document.querySelectorAll('.report-sidebar a').forEach(a => a.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Simple intersection observer to update sidebar on scroll
+    const options = { threshold: 0.1 };
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                document.querySelectorAll('.report-sidebar a').forEach(a => {
+                    a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
+                });
+            }
+        });
+    }, options);
+
+    document.querySelectorAll('.report-section').forEach(section => observer.observe(section));
+
+    // ERM Modal Logic
+    function openErmModal() {
+        const modal = document.getElementById('ermModal');
+        const modalBody = document.getElementById('erm-modal-body');
+        const sourceMermaid = document.getElementById('erm-source');
+        
+        // Find the generated SVG inside the source mermaid div
+        const svg = sourceMermaid.querySelector('svg');
+        
+        if (svg) {
+            // Clone the SVG so we don't remove it from the original spot
+            const clonedSvg = svg.cloneNode(true);
+            
+            // Clear previous contents and append clone
+            modalBody.innerHTML = '';
+            modalBody.appendChild(clonedSvg);
+            
+            // Show modal
+            modal.style.display = "block";
+            document.body.style.overflow = "hidden"; // Prevent background scrolling
+        }
+    }
+
+    function closeErmModal() {
+        const modal = document.getElementById('ermModal');
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+    }
+
+    // Close modal if clicked outside the content area
+    window.onclick = function(event) {
+        const modal = document.getElementById('ermModal');
+        if (event.target == modal) {
+            closeErmModal();
+        }
+    }
+</script>
+{% endblock %}

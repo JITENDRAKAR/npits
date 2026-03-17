@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3"
+                        style="width: 64px; height: 64px;">
+                        <i class="fas fa-user-edit fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold">Edit Profile</h3>
+                    <p class="text-muted small">Update your name and mobile number</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm">
+                            Save Changes <i class="fas fa-check ms-2"></i>
+                        </button>
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-info py-2 fw-bold">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </a>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary py-2 fw-bold">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
