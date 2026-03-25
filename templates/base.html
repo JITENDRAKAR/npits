@@ -226,19 +226,16 @@
             <a class="nav-link" href="{% url 'strategy' %}">Strategy</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'mf_guide' %}">MF Guide</a>
+            <a class="nav-link" href="{% url 'mf_guide' %}">MF Cue</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'stock_guide' %}">Stock IPO</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'etf_guide' %}">ETF Guide</a>
+            <a class="nav-link" href="{% url 'etf_guide' %}">ETF Cue</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url 'nps_guide' %}">NPS Guide</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'donation' %}">DONATION</a>
+            <a class="nav-link" href="{% url 'nps_guide' %}">NPS Cue</a>
           </li>
           {% if user.is_authenticated %}
           <li class="nav-item">
@@ -251,7 +248,7 @@
           </li>
           <li class="nav-item">
             <a class="nav-link pe-0" href="{% url 'edit_profile' %}">
-              Hello, <strong>{{ user.profile.full_name|default:user.username }}</strong>
+              HI <strong>{{ user.profile.full_name|default:user.username }}</strong>
             </a>
           </li>
           <li class="nav-item ms-2">
@@ -261,6 +258,9 @@
             </form>
           </li>
           {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'donation' %}">DONATION</a>
+          </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'login' %}">Login</a>
           </li>

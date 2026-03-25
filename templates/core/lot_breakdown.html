@@ -146,6 +146,16 @@
     .extra-small {
         font-size: 0.7rem;
     }
+    .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background-color: #f8f9fa !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .card, .table-responsive {
+        overflow: visible !important;
+    }
 
     .card {
         transition: transform 0.2s;

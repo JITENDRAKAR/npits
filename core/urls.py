@@ -11,7 +11,12 @@ urlpatterns = [
     path('register/send-otp/', views.send_signup_otp, name='send_signup_otp'),
     path('register/verify-otp/', views.verify_signup_otp, name='verify_signup_otp'),
     path('upload/portfolio/', views.upload_portfolio, name='upload_portfolio'),
+    path('export/portfolio/', views.export_portfolio, name='export_portfolio'),
     path('portfolio/add/', views.add_portfolio_item, name='add_portfolio_item'),
+    path('portfolio/add-cost/', views.upload_portfolio, name='add_folio_cost'), # Mapping to upload for now
+    path('watchlist/', views.watchlist, name='watchlist'),
+    path('watchlist/add/', views.add_to_watchlist_api, name='add_to_watchlist_api'),
+    path('watchlist/remove/', views.remove_from_watchlist_api, name='remove_from_watchlist_api'),
 
     path('upload/pnl/', views.upload_pnl, name='upload_pnl'),
     path('portfolio/edit/<int:pk>/', views.edit_portfolio_item, name='edit_portfolio_item'),
@@ -31,6 +36,9 @@ urlpatterns = [
     path('aboutproject/', views.about_project, name='about_project'),
     # Transactions and Lots
     path('transactions/', views.transaction_history, name='transaction_history'),
+    path('transactions/save-fy-data/', views.save_fy_data, name='save_fy_data'),
+    path('transactions/toggle-fy-lock/', views.toggle_fy_lock, name='toggle_fy_lock'),
+    path('transactions/delete-fy-data/', views.delete_fy_data, name='delete_fy_data'),
     path('portfolio/lots/<int:instrument_id>/', views.lot_breakdown, name='lot_breakdown'),
     path('portfolio/lot/edit/<int:pk>/', views.edit_lot, name='edit_lot'),
     path('portfolio/lot/delete/<int:pk>/', views.delete_lot, name='delete_lot'),

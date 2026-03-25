@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-8 text-center animate__animated animate__fadeIn">
+        <div class="error-illustration mb-5">
+            <i class="fas fa-search-location fa-8x text-muted opacity-25" style="position: absolute; transform: translate(-50%, -50%); top: 40%; left: 50%;"></i>
+            <h1 class="display-1 fw-bold mb-0" style="color: var(--primary-color); font-size: 10rem; position: relative;">404</h1>
+        </div>
+        
+        <h2 class="fw-bold mb-3">Lost in the Market?</h2>
+        <p class="text-muted mb-5 fs-5 mx-auto" style="max-width: 500px;">
+            The page you are looking for has either moved or never existed. 
+            Let's get you back to your portfolio.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-5 shadow-sm">
+                <i class="fas fa-chart-line me-2"></i> Dashboard
+            </a>
+            <a href="{% url 'landing' %}" class="btn btn-outline-secondary btn-lg px-5">
+                <i class="fas fa-home me-2"></i> Home
+            </a>
+        </div>
+        
+        <div class="mt-5 pt-4 text-muted small">
+            <p>If you believe this is an error, please contact support.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-illustration {
+        position: relative;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}

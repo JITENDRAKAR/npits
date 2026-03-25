@@ -10,6 +10,7 @@ class Instrument(models.Model):
     is_verified = models.BooleanField(default=False)
     last_price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     price_change = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    previous_close = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     pe_ratio = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     diff_from_lh_pct = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     last_updated = models.DateTimeField(null=True, blank=True)
@@ -264,3 +265,21 @@ class SignalNotificationState(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - Buy:{self.last_buy_count} Reduce:{self.last_reduce_count} Sell:{self.last_sell_count}"
+
+class FinancialYearData(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='financial_year_data')
+    financial_year = models.CharField(max_length=9) # Format: '2023-2024'
+    invested_amount = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    current_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    unrealized_pnl = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    realized_profit = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    is_locked = models.BooleanField(default=False)
+    edit_count = models.IntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'financial_year')
+        ordering = ['-financial_year']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.financial_year}"

@@ -329,6 +329,9 @@
                 <li><a href="#security">12. Security Mechanisms</a></li>
                 <li><a href="#future">13. Future Scope</a></li>
                 <li><a href="#biblio">14. Bibliography</a></li>
+                <li><a href="#uicode">15. UI Documentation & Code</a></li>
+                <li><a href="#backendmodels">16. Backend Data Models</a></li>
+                <li><a href="#backendviews">17. Backend Views & Logic</a></li>
             </ul>
         </nav>
 
@@ -1062,6 +1065,248 @@ CREATE INDEX "core_transaction_user_id" ON "core_transaction" ("user_id");
                     <li><strong>MySQL Reference Manual</strong> — dev.mysql.com/doc.</li>
                 </ol>
                 </ol>
+            </section>
+
+            <!-- SECTION 15: UI DOCUMENTATION & CODE -->
+            <section id="uicode" class="report-section">
+                <h2>15. UI Documentation & Code <span class="page-number">P.98</span></h2>
+                <p>This section outlines the User Interface (UI) architecture and code utilized in the NPITS application.</p>
+
+                <h3>15.1 Core UI Technologies</h3>
+                <ul>
+                    <li><strong>Bootstrap 5.3.0</strong>: The primary CSS framework used for grid layouts, typography, and pre-built components (navbars, modals, buttons, alerts).</li>
+                    <li><strong>Custom CSS (Vanilla)</strong>: Overrides and enhancements to Bootstrap, focusing on a premium aesthetic (glassmorphism, specific brand colors, and micro-animations).</li>
+                    <li><strong>Google Fonts (Inter)</strong>: The standard font family <code>Inter</code> provides clean, modern typography.</li>
+                    <li><strong>FontAwesome 6.0</strong>: Used extensively for iconography across tables, buttons, and status indicators.</li>
+                    <li><strong>Chart.js</strong>: Utilized for responsive, interactive wealth breakdown and portfolio analytics charts.</li>
+                </ul>
+
+                <h3>15.2 CSS Variables (Design Tokens)</h3>
+                <p>The application uses CSS Custom Properties (Variables) defined in the <code>:root</code> scope of <code>base.html</code> to maintain brand consistency.</p>
+                <div class="code-block">
+:root {
+  --primary-color: #003D7C; 
+  --secondary-color: #0056b3; 
+  --bg-light: #f4f7f9; 
+  --text-dark: #1a1e21; 
+  --text-muted: #6c757d; 
+  --success-green: #008D4C; 
+  --danger-red: #D62A2D; 
+  --warning-yellow: #ffc107; 
+}
+                </div>
+
+                <h3>15.3 Layout Structure (Base Template)</h3>
+                <p><code>base.html</code> dictates the shell of the application. The dynamic content for individual pages is injected into the <code>&lt;div class="container main-content"&gt;</code> block.</p>
+                <div class="code-block">
+{% verbatim %}&lt;div class="container main-content"&gt;
+  &lt;!-- Django Messages Alert System --&gt;
+  {% if messages %}
+    ...
+  {% endif %}
+
+  &lt;!-- Core Page Injection --&gt;
+  {% block content %}
+  {% endblock %}
+&lt;/div&gt;{% endverbatim %}
+                </div>
+
+                <h3>15.4 UI Components Code</h3>
+
+                <h4>15.4.1 Navigation Bar & Notifications</h4>
+                <div class="code-block">
+{% verbatim %}&lt;li class="nav-item"&gt;
+  &lt;a class="nav-link nav-item-dashboard" href="{% url 'dashboard' %}"&gt;
+    Dashboard
+    {% if total_signal_count > 0 %}
+      &lt;span class="badge-fbi"&gt;{{ total_signal_count }}&lt;/span&gt;
+    {% endif %}
+  &lt;/a&gt;
+&lt;/li&gt;{% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> The notification badge `.badge-fbi` highlights when there are urgent market signals for the user.</p>
+
+                <h4>15.4.2 Glassmorphism Panels</h4>
+                <div class="code-block">
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Use `.glass-panel` over complex backgrounds or for premium summary metrics at the top of a dashboard.</p>
+
+                <h4>15.4.3 Status Indicators (Typography)</h4>
+                <div class="code-block">
+.status-buy { color: var(--success-green); font-weight: 700; }
+.status-sell { color: var(--danger-red); font-weight: 700; }
+.status-hold { color: var(--warning-yellow); font-weight: 700; }
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Apply these classes dynamically via Django templates to any string that represents a trading recommendation.</p>
+
+                <h4>15.4.4 JavaScript Auto-Sync</h4>
+                <div class="code-block">
+(function () {
+  const SYNC_INTERVAL = 60 * 1000; // 1 minute
+  // ... local storage check logic ...
+  fetch('/api/sync-data/')
+    .then(response => response.json())
+    // ...
+})();
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Runs on every page load globally to check `localStorage` and triggers a Django API endpoint to pull the latest stock prices.</p>
+
+                <h4>15.4.5 Responsive Dashboard Tables</h4>
+                <div class="code-block">
+&lt;div class="table-responsive"&gt;
+  &lt;table class="table table-hover align-middle mb-0" style="font-size: 0.82rem;"&gt;
+    &lt;thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;"&gt;
+      &lt;tr&gt;
+        &lt;th class="py-3 text-uppercase text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.05em;"&gt;Symbol&lt;/th&gt;
+        &lt;th class="text-center py-3 text-uppercase text-muted fw-bold" style="font-size: 0.7rem;"&gt;Action&lt;/th&gt;
+      &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;!-- Row Data --&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> The <code>&lt;div class="table-responsive"&gt;</code> wrapper ensures tables scroll horizontally on mobile devices. Font sizes and padding are intentionally reduced to increase data density on the dashboard.</p>
+
+                <h4>15.4.6 High-Level Summary Cards</h4>
+                <div class="code-block">
+{% verbatim %}&lt;div class="card bg-white h-100"&gt;
+    &lt;div class="card-body p-4"&gt;
+        &lt;div class="d-flex justify-content-between align-items-center mb-3"&gt;
+            &lt;h6 class="text-uppercase text-muted mb-0 fw-bold" style="font-size: 0.75rem;"&gt;Invested Value&lt;/h6&gt;
+            &lt;div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-circle"&gt;
+                &lt;i class="fas fa-wallet"&gt;&lt;/i&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;h3 class="mb-0 fw-bold" style="color: var(--primary-color);"&gt;₹{{ total_invested|floatformat:2 }}&lt;/h3&gt;
+    &lt;/div&gt;
+&lt;/div&gt;{% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Used extensively on the main <code>dashboard.html</code> to display aggregated portfolio statistics like Total Investment, Current Value, and Unrealized PnL.</p>
+
+            </section>
+
+            <!-- SECTION 16: BACKEND DATA MODELS -->
+            <section id="backendmodels" class="report-section">
+                <h2>16. Backend Data Models <span class="page-number">P.100</span></h2>
+                <p>This section details the actual Django ORM code used to define the database schema and handle core business logic.</p>
+
+                <h3>16.1 Instrument Model</h3>
+                <div class="code-block">
+{% verbatim %}class Instrument(models.Model):
+    name = models.CharField(max_length=100)
+    symbol = models.CharField(max_length=50, unique=True)
+    isin = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
+    last_price = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    def save(self, *args, **kwargs):
+        if self.symbol:
+            self.symbol = self.symbol.strip().upper()
+        super().save(*args, **kwargs){% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Master table for all traded stocks/ETFs. Includes a custom `save` method to ensure all ticker symbols are stored uniformly in uppercase to prevent duplicate entries (e.g., 'reliance' vs 'RELIANCE').</p>
+
+                <h3>16.2 Portfolio Model</h3>
+                <div class="code-block">
+{% verbatim %}class Portfolio(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    avg_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    ltp = models.DecimalField(max_digits=10, decimal_places=2) # Last Traded Price
+    
+    @property
+    def invested_amount(self):
+        return self.quantity * self.avg_cost
+
+    @property
+    def current_value(self):
+        return self.quantity * self.ltp
+
+    @property
+    def unrealized_pnl(self):
+        return self.current_value - self.invested_amount{% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Acts as the real-time aggregated snapshot for a user's holdings. Uses Django `@property` decorators to dynamically calculate PnL rather than storing it explicitly in the database, avoiding transitive dependency vulnerabilities.</p>
+
+                <h3>16.3 Transaction (FIFO) Model</h3>
+                <div class="code-block">
+{% verbatim %}class Transaction(models.Model):
+    TRANSACTION_TYPES = [('BUY', 'Buy'), ('SELL', 'Sell')]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
+    transaction_type = models.CharField(max_length=4, choices=TRANSACTION_TYPES)
+    quantity = models.IntegerField()
+    remaining_quantity = models.IntegerField(default=0) # Only for BUY
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+
+    class Meta:
+        ordering = ['date', 'created_at']{% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> The immutable ledger powering the FIFO engine. `remaining_quantity` tracks specific lots from buy orders. The `Meta.ordering` ensures lots are executed strictly by trade chronological order.</p>
+
+            </section>
+
+            <!-- SECTION 17: BACKEND VIEWS & LOGIC -->
+            <section id="backendviews" class="report-section">
+                <h2>17. Backend Views & Logic <span class="page-number">P.103</span></h2>
+                <p>Highlights of the Python operational code connecting the UI with the data models.</p>
+
+                <h3>17.1 Portfolio Upload View (CSV Handling)</h3>
+                <div class="code-block">
+{% verbatim %}@login_required
+def upload_portfolio(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            df = handle_uploaded_file(request.FILES['file'])
+            if df is not None:
+                for _, row in df.iterrows():
+                    symbol = row.get('Instrument')
+                    qty = clean_numeric(row.get('Quantity'), to_int=True)
+                    avg = clean_numeric(row.get('Average Cost'))
+                    
+                    inst = resolve_instrument(symbol.strip())
+                    
+                    # Create Transaction record for each row (lot preservation)
+                    Transaction.objects.create(
+                        user=request.user, instrument=inst, transaction_type='BUY',
+                        quantity=qty, remaining_quantity=qty, price=avg, date=timezone.now().date()
+                    )
+                messages.success(request, "Portfolio uploaded successfully.")
+                return redirect('dashboard'){% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> Handles the file upload via POST. Parses the excel/csv using the `pandas` library, sanitizes the data, and loops through rows to build out individual `Transaction` objects for the FIFO engine.</p>
+
+                <h3>17.2 RSS Feed Ingestion</h3>
+                <div class="code-block">
+{% verbatim %}def fetch_landing_data():
+    """Fetch all RSS feeds for the landing page with caching."""
+    cache_key = 'landing_rss_data_v3'
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return cached_data
+
+    nse_news = fetch_rss_feed('https://www.livemint.com/rss/markets', 'Livemint')
+    pulse_news = fetch_rss_feed('http://pulse.zerodha.com/feed.php', 'Zerodha Pulse')
+    
+    result = {'nse_news': nse_news[:20], 'financial_news': pulse_news[:20]}
+    
+    if nse_news or pulse_news:
+        cache.set(cache_key, result, 1800) # 30 mins limit
+    return result{% endverbatim %}
+                </div>
+                <p class="text-muted small"><strong>Use of this code:</strong> An external connectivity function used on the landing page. It heavily utilizes Django's `cache` module (Timeout: 1800s) to avoid throttling by upstream news servers and reducing load times.</p>
+                
             </section>
 
             <!-- ERM Enlarge Modal -->

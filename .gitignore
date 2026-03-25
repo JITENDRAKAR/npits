@@ -154,3 +154,5 @@ sample_portfolio.csv
 symbols.txt
 *.bak
 *.tmp
+backups/
+staticfiles/

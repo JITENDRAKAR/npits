@@ -22,10 +22,8 @@ class CoreConfig(AppConfig):
             
             scheduler = BackgroundScheduler()
             scheduler.add_job(perform_sync, 'interval', minutes=1, id='gsheet_sync_job', replace_existing=True)
-            # Run alerts check every 4 hours
-            scheduler.add_job(run_alerts, 'interval', hours=4, id='signal_alert_job', replace_existing=True)
             scheduler.start()
-            print("Background scheduler started for Google Sheets sync & alerts.")
+            print("Background scheduler started for Google Sheets sync.")
         elif not os.environ.get('RUN_MAIN'):
             # Fallback for other environments like IIS
             from .utils import perform_sync
@@ -33,7 +31,5 @@ class CoreConfig(AppConfig):
             
             scheduler = BackgroundScheduler()
             scheduler.add_job(perform_sync, 'interval', minutes=1, id='gsheet_sync_job', replace_existing=True)
-            # Run alerts check every 4 hours
-            scheduler.add_job(run_alerts, 'interval', hours=4, id='signal_alert_job', replace_existing=True)
             scheduler.start()
-            print("Background scheduler started (IIS/Generic) with alerts.")
+            print("Background scheduler started (IIS/Generic) with Google Sheets sync.")

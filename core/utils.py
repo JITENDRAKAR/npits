@@ -91,6 +91,22 @@ def perform_sync():
                             except (ValueError, TypeError):
                                 change_val = 0
                             
+                            # Special handling for common indices to ensure accuracy vs yesterday's close
+                            if name.upper() in ['NIFTY 50', 'SENSEX', 'NIFTY BANK', 'NIFTY IT']:
+                                symbol_map = {'NIFTY 50': '^NSEI', 'SENSEX': '^BSESN', 'NIFTY BANK': '^NSEBANK', 'NIFTY IT': '^CNXIT'}
+                                sym = symbol_map.get(name.upper())
+                                if sym:
+                                    try:
+                                        t = yf.Ticker(sym)
+                                        inf = t.info
+                                        cp = inf.get('regularMarketPrice') or inf.get('currentPrice')
+                                        pc = inf.get('regularMarketPreviousClose') or inf.get('previousClose')
+                                        if cp and pc:
+                                            price = round(float(cp), 2)
+                                            change_val = round(price - float(pc), 2)
+                                    except Exception as ex:
+                                        logger.error(f"Error fetching live index override for {name}: {ex}")
+
                             MarketTicker.objects.update_or_create(
                                 name=name,
                                 defaults={'price': price, 'change': change_val}
@@ -174,10 +190,11 @@ def perform_sync():
                     ltp, change, pe, lh_diff = ltp_map[inst.symbol]
                     inst.last_price = ltp
                     inst.price_change = change
+                    inst.previous_close = ltp - change
                     inst.pe_ratio = pe
                     inst.diff_from_lh_pct = lh_diff
                     inst.last_updated = timezone.now()
-                    inst.save(update_fields=['last_price', 'price_change', 'pe_ratio', 'diff_from_lh_pct', 'last_updated'])
+                    inst.save(update_fields=['last_price', 'price_change', 'previous_close', 'pe_ratio', 'diff_from_lh_pct', 'last_updated'])
                 
                 # Update Portfolios
                 portfolios = Portfolio.objects.all().select_related('instrument')
@@ -397,6 +414,17 @@ def get_recommendations(user):
         buy_gap = buy_gap_formula if action == 'BUY' else 0
         reduce_gap = abs(buy_gap_formula) if action == 'REDUCE' else 0
 
+        # Day Change Calculations
+        absolute_change = float(item.instrument.price_change or 0)
+        previous_close = float(item.instrument.previous_close or 0)
+        
+        # Fallback if previous_close is not set
+        if previous_close <= 0:
+            previous_close = ltp - absolute_change
+            
+        day_change = absolute_change * quantity
+        day_change_pct = (absolute_change / previous_close * 100) if previous_close > 0 else 0
+
         recommendations.append({
             'symbol': symbol,
             'name': item.instrument.name,
@@ -407,6 +435,9 @@ def get_recommendations(user):
             'current_value': round(current, 2),
             'unrealized_pnl': round(unrealized, 2),
             'pnl_percent': round(unrealized_pct, 2),
+            'day_change': round(day_change, 2),
+            'day_change_pct': round(day_change_pct, 2),
+            'previous_close': round(previous_close, 2),
             'action': action,
             'reason': reason,
             'portfolio_id': item.id,
@@ -456,6 +487,8 @@ def get_recommendations(user):
                 'current_value': 0,
                 'unrealized_pnl': 0,
                 'pnl_percent': 0,
+                'day_change': 0,
+                'day_change_pct': 0,
                 'action': action,
                 'buy_gap': round(buy_gap, 2),
                 'reduce_gap': round(reduce_gap, 2),
@@ -510,6 +543,8 @@ def get_recommendations(user):
                 'current_value': 0,
                 'unrealized_pnl': 0,
                 'pnl_percent': 0,
+                'day_change': 0,
+                'day_change_pct': 0,
                 'action': action,
                 'buy_gap': round(buy_gap, 2),
                 'reduce_gap': round(reduce_gap, 2),

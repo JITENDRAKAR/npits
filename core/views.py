@@ -25,6 +25,8 @@ from .utils import fetch_live_ltp, perform_sync, get_recommendations, fetch_stra
 import random
 import json
 import yfinance as yf
+import pandas as pd
+import math
 from decimal import Decimal
 
 @login_required
@@ -167,7 +169,7 @@ from django.db.models import Sum, F
 from django.db.models.functions import Upper
 
 PORTFOLIO_HEADERS = ['Instrument', 'Quantity', 'Average Cost', 'LTP']
-PNL_HEADERS = ['Symbol', 'Quantity', 'Buy Value', 'Sell Value', 'Profit', 'Exit Date']
+PNL_HEADERS = ['Symbol', 'Quantity', 'Buy Value', 'Sell Value', 'Profit', 'Entry Date', 'Exit Date']
 
 STRATEGY_SYMBOLS = {
     'flexi': {
@@ -466,11 +468,10 @@ def dashboard(request):
                     filtered_recommendations.append(r)
         recommendations = filtered_recommendations
     else:
-        # Default view: show portfolio items PLUS non-portfolio stocks ONLY IF they are P&L Buybacks
-        # (Realized profit > 0 means they were previously held and sold)
+        # Default view: show portfolio items PLUS all strategy signals
         recommendations = [
             r for r in recommendations 
-            if r.get('in_portfolio', False) or (r.get('action') == 'BUY' and r.get('realized_profit', 0) > 0)
+            if r.get('in_portfolio', False) or r.get('action') in ['BUY', 'SELL', 'REDUCE']
         ]
 
     # Recalculate totals based on the filtered view
@@ -482,6 +483,12 @@ def dashboard(request):
     if total_invested > 0:
         total_unrealized_pnl_percent = (total_unrealized_pnl / total_invested) * 100
     
+    total_day_change = sum(r.get('day_change', 0) for r in recommendations if r.get('in_portfolio'))
+    total_day_change_percent = 0
+    previous_total_value = total_current_value - total_day_change
+    if previous_total_value > 0:
+        total_day_change_percent = (total_day_change / previous_total_value) * 100
+
     if current_strategy and current_strategy != 'others':
         target_list = all_strategy_stocks.get(current_strategy, [])
         total_realized_profit = sum(profit for symbol, profit in realized_profits.items() if symbol.upper() in target_list)
@@ -526,6 +533,8 @@ def dashboard(request):
         'total_unrealized_pnl': total_unrealized_pnl,
         'total_unrealized_pnl_percent': total_unrealized_pnl_percent,
         'total_realized_profit': total_realized_profit,
+        'total_day_change': total_day_change,
+        'total_day_change_percent': total_day_change_percent,
         'last_updated': last_updated,
         'current_strategy': current_strategy,
     }
@@ -616,102 +625,167 @@ def upload_portfolio(request):
         if form.is_valid():
             df = handle_uploaded_file(request.FILES['file'])
             if df is not None:
-                # Fetch live LTPs to prefer over file data if available
-                live_ltps = fetch_live_ltp()
-                
-                # Track aggregated data per symbol: {symbol: {'qty': total_qty, 'cost': weighted_avg_cost, 'ltp': last_ltp, 'instrument': inst_obj}}
-                aggregated_data = {}
+                # Strict Header Validation
+                uploaded_headers = list(df.columns)
+                if uploaded_headers != PORTFOLIO_HEADERS:
+                    messages.error(request, f"Header mismatch. Expected: {PORTFOLIO_HEADERS}. Got: {uploaded_headers}")
+                    return redirect('upload_portfolio')
 
-                for _, row in df.iterrows():
-                    symbol = row.get('Instrument')
-                    if not symbol:
-                        continue
+                try:
+                    # Fetch live LTPs to prefer over file data if available
+                    live_ltps = fetch_live_ltp()
                     
-                    clean_symbol = symbol.strip().upper()
-                    qty    = clean_numeric(row.get('Quantity'), to_int=True)
-                    avg    = clean_numeric(row.get('Average Cost'))
-                    
-                    # Prefer Live LTP if available, otherwise fallback to file LTP
-                    ltp_data = live_ltps.get(clean_symbol)
-                    if isinstance(ltp_data, tuple):
-                        ltp = float(ltp_data[0])
-                    else:
-                        ltp = float(ltp_data or clean_numeric(row.get('LTP')) or 0)
+                    # Track aggregated data per symbol: {symbol: {'qty': total_qty, 'cost': weighted_avg_cost, 'ltp': last_ltp, 'instrument': inst_obj}}
+                    aggregated_data = {}
 
-                    # Skip rows where symbol or quantity is missing/NaN
-                    if not clean_symbol or (isinstance(clean_symbol, float) and math.isnan(clean_symbol)):
-                        continue
-                    if qty is None or (isinstance(qty, float) and math.isnan(qty)):
-                        continue
+                    for idx, row in df.iterrows():
+                        symbol = row.get('Instrument')
+                        if not symbol:
+                            continue
+                        
+                        clean_symbol = symbol.strip().upper()
+                        qty    = clean_numeric(row.get('Quantity'), to_int=True)
+                        avg    = clean_numeric(row.get('Average Cost'))
+                        
+                        # Prefer Live LTP if available, otherwise fallback to file LTP
+                        ltp_data = live_ltps.get(clean_symbol)
+                        if isinstance(ltp_data, tuple):
+                            ltp = float(ltp_data[0])
+                        else:
+                            ltp = float(ltp_data or clean_numeric(row.get('LTP')) or 0)
 
-                    # Get Instrument (must be verified)
-                    from core.utils import resolve_instrument
-                    inst = resolve_instrument(clean_symbol)
-                    if not inst:
-                        messages.warning(request, f"Skipped '{symbol}': Not in verified database.")
-                        continue
+                        # Skip rows where symbol or quantity is missing/NaN
+                        if not clean_symbol or (isinstance(clean_symbol, float) and math.isnan(clean_symbol)):
+                            continue
+                        if qty is None or (isinstance(qty, float) and math.isnan(qty)):
+                            continue
 
-                    # Create Transaction record for each row (lot preservation)
-                    Transaction.objects.create(
-                        user=request.user,
-                        instrument=inst,
-                        transaction_type='BUY',
-                        quantity=qty,
-                        remaining_quantity=qty,
-                        price=avg,
-                        date=timezone.now().date()
-                    )
+                        # Get Instrument (must be verified)
+                        from core.utils import resolve_instrument
+                        inst = resolve_instrument(clean_symbol)
+                        if not inst:
+                            messages.warning(request, f"Skipped '{symbol}': Not in verified database.")
+                            continue
 
-                    # Aggregate data for Portfolio update
-                    if clean_symbol not in aggregated_data:
-                        aggregated_data[clean_symbol] = {
-                            'qty': qty,
-                            'total_cost': Decimal(str(qty)) * Decimal(str(avg)),
-                            'ltp': ltp,
-                            'instrument': inst
-                        }
-                    else:
-                        aggregated_data[clean_symbol]['qty'] += qty
-                        aggregated_data[clean_symbol]['total_cost'] += Decimal(str(qty)) * Decimal(str(avg))
-                        # Update LTP only if we have a non-zero one
-                        if ltp > 0:
-                            aggregated_data[clean_symbol]['ltp'] = ltp
+                        # Create Transaction record for each row (lot preservation)
+                        Transaction.objects.create(
+                            user=request.user,
+                            instrument=inst,
+                            transaction_type='BUY',
+                            quantity=qty,
+                            remaining_quantity=qty,
+                            price=avg,
+                            date=timezone.now().date()
+                        )
 
-                # Update Portfolio once per symbol with aggregated totals
-                for symbol, data in aggregated_data.items():
-                    qty = data['qty']
-                    total_cost = data['total_cost']
-                    avg_cost = total_cost / Decimal(str(qty)) if qty > 0 else 0
-                    ltp = data['ltp']
-                    inst = data['instrument']
+                        # Aggregate data for Portfolio update
+                        if clean_symbol not in aggregated_data:
+                            aggregated_data[clean_symbol] = {
+                                'qty': qty,
+                                'total_cost': Decimal(str(qty)) * Decimal(str(avg)),
+                                'ltp': ltp,
+                                'instrument': inst
+                            }
+                        else:
+                            aggregated_data[clean_symbol]['qty'] += qty
+                            aggregated_data[clean_symbol]['total_cost'] += Decimal(str(qty)) * Decimal(str(avg))
+                            # Update LTP only if we have a non-zero one
+                            if ltp > 0:
+                                aggregated_data[clean_symbol]['ltp'] = ltp
 
-                    portfolio, created = Portfolio.objects.get_or_create(
-                        user=request.user,
-                        instrument=inst,
-                        defaults={
-                            'quantity': qty,
-                            'avg_cost': avg_cost,
-                            'ltp': ltp or 0
-                        }
-                    )
-                    if not created:
-                        # If it already exists, we replace with the new upload state (which seems to be the intended behavior of upload_portfolio)
-                        portfolio.quantity = qty
-                        portfolio.avg_cost = avg_cost
-                        # Only update LTP if it was 0 or just provided
-                        if not portfolio.ltp or portfolio.ltp == 0 or ltp > 0:
-                            portfolio.ltp = ltp or portfolio.ltp
-                        portfolio.save()
+                    # Update Portfolio once per symbol with aggregated totals
+                    for symbol, data in aggregated_data.items():
+                        qty = data['qty']
+                        total_cost = data['total_cost']
+                        avg_cost = total_cost / Decimal(str(qty)) if qty > 0 else 0
+                        ltp = data['ltp']
+                        inst = data['instrument']
 
-                messages.success(request, "Portfolio uploaded successfully.")
-                return redirect('dashboard')
+                        portfolio, created = Portfolio.objects.get_or_create(
+                            user=request.user,
+                            instrument=inst,
+                            defaults={
+                                'quantity': qty,
+                                'avg_cost': avg_cost,
+                                'ltp': ltp or 0
+                            }
+                        )
+                        if not created:
+                            # If it already exists, we replace with the new upload state (which seems to be the intended behavior of upload_portfolio)
+                            portfolio.quantity = qty
+                            portfolio.avg_cost = avg_cost
+                            # Only update LTP if it was 0 or just provided
+                            if not portfolio.ltp or portfolio.ltp == 0 or ltp > 0:
+                                portfolio.ltp = ltp or portfolio.ltp
+                            portfolio.save()
+
+                    messages.success(request, "Portfolio uploaded successfully.")
+                    return redirect('dashboard')
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    messages.error(request, f"Upload failed: {type(e).__name__}: {e}")
             else:
-                messages.error(request, "Invalid file format.")
+                messages.error(request, "Invalid file format. Please upload a .csv or .xlsx file.")
     else:
         form = UploadFileForm()
     return render(request, 'core/upload.html', {'form': form, 'title': 'Upload Portfolio'})
 
 @login_required
+def export_portfolio(request):
+    """Export the user's portfolio data to an Excel file."""
+    from django.http import HttpResponse
+    import io
+    try:
+        recommendations, realized_profits, strategy_stocks = get_recommendations(request.user)
+        
+        # Filter to show only portfolio items (same as dashboard default view)
+        recommendations = [
+            r for r in recommendations
+            if r.get('in_portfolio', False) or (r.get('action') == 'BUY' and r.get('realized_profit', 0) > 0)
+        ]
+
+        # Build rows for export
+        rows = []
+        for r in recommendations:
+            rows.append({
+                'Instrument': r.get('name', r.get('symbol', '')),
+                'Symbol': r.get('symbol', ''),
+                'Quantity': r.get('quantity', 0),
+                'Average Cost': round(float(r.get('avg_cost', 0)), 2),
+                'LTP': round(float(r.get('ltp', 0)), 2),
+                'Day Change': round(float(r.get('day_change', 0)), 2),
+                'Day Change %': round(float(r.get('day_change_pct', 0)), 2),
+                'Invested Amount': round(float(r.get('invested_amount', 0)), 2),
+                'Current Value': round(float(r.get('current_value', 0)), 2),
+                'Unrealized P&L': round(float(r.get('unrealized_pnl', 0)), 2),
+                'P&L %': round(float(r.get('pnl_percent', 0)), 2),
+                'Action': r.get('action', ''),
+                'Reason': r.get('reason', ''),
+                'Realized Profit': round(float(r.get('realized_profit', 0)), 2),
+            })
+
+        df = pd.DataFrame(rows)
+
+        # Write to Excel in memory
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Portfolio')
+        buffer.seek(0)
+
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="portfolio_export.xlsx"'
+        return response
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Export failed: {type(e).__name__}: {e}")
+        return redirect('dashboard')
+
+
 def upload_pnl(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST, request.FILES)
@@ -731,6 +805,7 @@ def upload_pnl(request):
                     sell_val = clean_numeric(row.get('Sell Value'))
                     buy_val = clean_numeric(row.get('Buy Value'))
                     profit = clean_numeric(row.get('Profit'))
+                    entry_date = row.get('Entry Date')
                     exit_date = row.get('Exit Date')
                     
                     # Basic validation
@@ -758,7 +833,8 @@ def upload_pnl(request):
                                 buy_value=buy_val or 0,
                                 sell_value=sell_val or 0,
                                 realized_profit=profit,
-                                exit_date=pd.to_datetime(exit_date).date() if exit_date else None
+                                entry_date=pd.to_datetime(entry_date).date() if entry_date and str(entry_date).lower() != 'nan' else None,
+                                exit_date=pd.to_datetime(exit_date).date() if exit_date and str(exit_date).lower() != 'nan' else None
                             )
                             count += 1
                 messages.success(request, f"{count} P&L records uploaded.")
@@ -1019,9 +1095,11 @@ def sell_stock(request):
 
         total_buy_value = Decimal('0')
         remaining_to_deduct = quantity_to_sell
+        first_entry_date = None
 
         if intraday_buy:
             total_buy_value = Decimal(str(quantity_to_sell)) * intraday_buy.price
+            first_entry_date = intraday_buy.date
             intraday_buy.remaining_quantity = 0
             intraday_buy.save()
             remaining_to_deduct = 0
@@ -1037,6 +1115,9 @@ def sell_stock(request):
             for tx in buy_txs:
                 if remaining_to_deduct <= 0:
                     break
+                
+                if first_entry_date is None:
+                    first_entry_date = tx.date
                     
                 deduct = min(tx.remaining_quantity, remaining_to_deduct)
                 total_buy_value += Decimal(str(deduct)) * tx.price
@@ -1061,6 +1142,7 @@ def sell_stock(request):
         PnLStatement.objects.create(
             user=request.user,
             instrument=inst,
+            entry_date=first_entry_date,
             quantity=quantity_to_sell,
             buy_value=total_buy_value,
             sell_value=sell_value,
@@ -1090,11 +1172,141 @@ def sell_stock(request):
             
         messages.success(request, f"Sold {quantity_to_sell} units of {symbol} at {price}. Profit: {profit}")
         return redirect('dashboard')
+def get_current_financial_year():
+    now = timezone.now().date()
+    if now.month >= 4:
+        return f"{now.year}-{now.year+1}"
+    else:
+        return f"{now.year-1}-{now.year}"
+
 @login_required
 def transaction_history(request):
     """View all buy/sell transactions for the user."""
     transactions = Transaction.objects.filter(user=request.user).select_related('instrument').order_by('-date', '-created_at')
-    return render(request, 'core/transactions.html', {'transactions': transactions})
+    
+    current_fy_str = get_current_financial_year()
+    portfolios = Portfolio.objects.filter(user=request.user)
+    current_invested = sum(p.invested_amount for p in portfolios)
+    current_value = sum(p.current_value for p in portfolios)
+    current_unrealized = sum(p.unrealized_pnl for p in portfolios)
+    
+    start_year = int(current_fy_str.split('-')[0])
+    end_year = int(current_fy_str.split('-')[1])
+    from .models import FinancialYearData
+    
+    total_realized_profits = PnLStatement.objects.filter(user=request.user)
+    total_realized = sum(rp.realized_profit for rp in total_realized_profits)
+    
+    past_fys = FinancialYearData.objects.filter(user=request.user).exclude(financial_year=current_fy_str)
+    past_fys_realized_sum = sum(fd.realized_profit for fd in past_fys)
+    
+    current_realized = total_realized - past_fys_realized_sum
+    
+    # Automatically add/update current FY
+    current_fy_obj, _ = FinancialYearData.objects.update_or_create(
+        user=request.user,
+        financial_year=current_fy_str,
+        defaults={
+            'invested_amount': current_invested,
+            'current_value': current_value,
+            'unrealized_pnl': current_unrealized,
+            'realized_profit': current_realized
+        }
+    )
+    
+    # Get all FY data (including current that we just saved/updated) ordered by most recent
+    fy_data = FinancialYearData.objects.filter(user=request.user).order_by('-financial_year')
+    current_fy_data = [fd for fd in fy_data if fd.financial_year == current_fy_str]
+    past_fy_data = [fd for fd in fy_data if fd.financial_year != current_fy_str]
+    
+    return render(request, 'core/transactions.html', {
+        'transactions': transactions,
+        'current_fy_data': current_fy_data[0] if current_fy_data else None,
+        'past_fy_data': past_fy_data
+    })
+
+@login_required
+@csrf_exempt
+def save_fy_data(request):
+    if request.method == 'POST':
+        import json
+        from decimal import Decimal
+        try:
+            data = json.loads(request.body)
+            from .models import FinancialYearData
+            for row in data:
+                fy = row.get('year')
+                if fy:
+                    obj = FinancialYearData.objects.filter(user=request.user, financial_year=fy).first()
+                    invested = Decimal(str(row.get('invested', 0)))
+                    current = Decimal(str(row.get('current', 0)))
+                    unrealized = Decimal(str(row.get('unrealized', 0)))
+                    realized = Decimal(str(row.get('realized', 0)))
+                    
+                    if obj:
+                        if obj.is_locked: 
+                            continue # Locked, silently ignore
+                        
+                        # Only update if data actually changed
+                        if (obj.invested_amount != invested or 
+                            obj.current_value != current or 
+                            obj.unrealized_pnl != unrealized or 
+                            obj.realized_profit != realized):
+                            
+                            obj.invested_amount = invested
+                            obj.current_value = current
+                            obj.unrealized_pnl = unrealized
+                            obj.realized_profit = realized
+                            obj.save()
+                    else:
+                        FinancialYearData.objects.create(
+                            user=request.user,
+                            financial_year=fy,
+                            invested_amount=invested,
+                            current_value=current,
+                            unrealized_pnl=unrealized,
+                            realized_profit=realized,
+                            edit_count=1
+                        )
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error'}, status=405)
+
+@login_required
+@csrf_exempt
+def toggle_fy_lock(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            fy = data.get('year')
+            from .models import FinancialYearData
+            obj = get_object_or_404(FinancialYearData, user=request.user, financial_year=fy)
+            obj.is_locked = not obj.is_locked
+            obj.save()
+            return JsonResponse({'status': 'success', 'is_locked': obj.is_locked})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error'}, status=405)
+
+@login_required
+@csrf_exempt
+def delete_fy_data(request):
+    if request.method == 'POST':
+        import json
+        try:
+            data = json.loads(request.body)
+            fy = data.get('year')
+            from .models import FinancialYearData
+            obj = get_object_or_404(FinancialYearData, user=request.user, financial_year=fy)
+            if obj.is_locked:
+                return JsonResponse({'status': 'error', 'message': 'Cannot delete a locked record.'}, status=403)
+            obj.delete()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error'}, status=405)
 
 @login_required
 def lot_breakdown(request, instrument_id):
@@ -1333,7 +1545,23 @@ def index_data_api(request):
             
         # Calculate change info based on the fetched history
         current_price = prices[-1]
-        prev_price = prices[0]
+
+        if period == '1d':
+            # Proper 1-day change: relative to previous day's close
+            info = ticker.info
+            prev_price = info.get('regularMarketPreviousClose') or info.get('previousClose')
+            
+            if not prev_price:
+                # period='1d' is currently intraday 5m data.
+                # Fetch daily data to get yesterday's close.
+                hist_daily = ticker.history(period='5d', interval='1d')
+                if len(hist_daily) >= 2:
+                    prev_price = float(hist_daily['Close'].iloc[-2])
+                else:
+                    prev_price = prices[0] # Fallback to open
+        else:
+            prev_price = prices[0]
+
         change = round(current_price - prev_price, 2)
         change_pct = round((change / prev_price) * 100, 2) if prev_price else 0
 
@@ -1349,6 +1577,7 @@ def index_data_api(request):
             'labels': labels,
             'prices': prices,
             'current_price': current_price,
+            'previous_close': prev_price,
             'change': change,
             'change_pct': change_pct,
             'symbol_name': name,
@@ -1397,7 +1626,11 @@ def stock_price_api(request):
 
         info = ticker.info
         current_price = round(float(hist['Close'].iloc[-1]), 2)
-        prev_close = round(float(hist['Close'].iloc[-2]), 2) if len(hist) > 1 else current_price
+        
+        # Prioritize info previousClose for accuracy
+        prev_close = info.get('regularMarketPreviousClose') or info.get('previousClose')
+        if not prev_close:
+            prev_close = round(float(hist['Close'].iloc[-2]), 2) if len(hist) > 1 else current_price
         
         change = round(current_price - prev_close, 2)
         change_pct = round((change / prev_close) * 100, 2) if prev_close else 0
@@ -1406,6 +1639,7 @@ def stock_price_api(request):
             'symbol': symbol_ns,
             'name': info.get('longName', symbol),
             'price': current_price,
+            'previous_close': prev_close,
             'change': change,
             'change_pct': change_pct,
             'currency': info.get('currency', 'INR'),
@@ -1442,43 +1676,88 @@ def stock_suggestions_api(request):
 
 @csrf_exempt
 def stock_history_api(request):
-    """Fetch historical data for a specific stock for graphing."""
+    """Fetch historical OHLC data for any stock symbol."""
     symbol = request.GET.get('symbol', '').strip().upper()
     period = request.GET.get('period', '1d')
     
     if not symbol:
         return JsonResponse({'status': 'error', 'message': 'Symbol is required'}, status=400)
 
-    # Use .NS or .BO suffix if not present
-    if '.' not in symbol:
-        symbol = f"{symbol}.NS"
+    # Smart symbol handling: append .NS if no suffix
+    if not any(x in symbol for x in ['^', '.', '=F']):
+        symbol_ns = f"{symbol}.NS"
+    else:
+        symbol_ns = symbol
 
-    interval = '5m' if period == '1d' else '1d'
-    cache_key = f'stock_hist_{symbol}_{period}'
-    
+    # Mapping for common intervals
+    interval_map = {
+        '1d': '5m',
+        '1mo': '1d',
+        '6mo': '1d',
+        '9mo': '1d',
+        '1y': '1d',
+        'max': '1wk'
+    }
+    interval = interval_map.get(period, '1d')
+
     try:
+        cache_key = f'stock_history_{symbol_ns}_{period}'
         data = cache.get(cache_key)
         if data:
             return JsonResponse(data)
 
-        ticker = yf.Ticker(symbol)
+        ticker = yf.Ticker(symbol_ns)
         hist = ticker.history(period=period, interval=interval)
         
-        if hist.empty and symbol.endswith('.NS'):
-            # Fallback to BSE if NSE fails
-            symbol = symbol.replace('.NS', '.BO')
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period=period, interval=interval)
+        hist = hist.dropna(subset=['Close'])
+        
+        if hist.empty and period == '1d':
+            hist = ticker.history(period='5d', interval='5m')
+            hist = hist.dropna(subset=['Close'])
+            
+        if hist.empty:
+            if symbol_ns.endswith('.NS'):
+                symbol_ns = symbol_ns.replace('.NS', '.BO')
+                ticker = yf.Ticker(symbol_ns)
+                hist = ticker.history(period=period, interval=interval)
+                hist = hist.dropna(subset=['Close'])
+                if hist.empty and period == '1d':
+                    hist = ticker.history(period='5d', interval='5m')
+                    hist = hist.dropna(subset=['Close'])
 
         if hist.empty:
-            return JsonResponse({'status': 'error', 'message': 'No historical data found'}, status=404)
+            return JsonResponse({'status': 'error', 'message': f'No history found for {symbol_ns}'}, status=404)
 
-        labels = [d.strftime('%H:%M' if period == '1d' else '%Y-%m-%d') for d in hist.index]
-        prices = [round(float(p), 2) for p in hist['Close']]
-        
-        # Calculate change info based on the fetched history
+        # Prepare data for Chart.js
+        if period == '1d':
+            last_date = hist.index[-1].date()
+            day_data = hist[hist.index.date == last_date]
+            if day_data.empty: day_data = hist.tail(50)
+            labels = [d.strftime('%H:%M') for d in day_data.index]
+            prices = [round(float(p), 2) for p in day_data['Close']]
+        elif period == 'max':
+            labels = [d.strftime('%Y') for d in hist.index]
+            prices = [round(float(p), 2) for p in hist['Close']]
+        else:
+            labels = [d.strftime('%Y-%m-%d') for d in hist.index]
+            prices = [round(float(p), 2) for p in hist['Close']]
+            
         current_price = prices[-1]
-        prev_price = prices[0]
+
+        if period == '1d':
+            # Use ticker.info for accurate baseline
+            info = ticker.info
+            prev_price = info.get('regularMarketPreviousClose') or info.get('previousClose')
+
+            if not prev_price:
+                hist_daily = ticker.history(period='5d', interval='1d')
+                if len(hist_daily) >= 2:
+                    prev_price = float(hist_daily['Close'].iloc[-2])
+                else:
+                    prev_price = prices[0]
+        else:
+            prev_price = prices[0]
+
         change = round(current_price - prev_price, 2)
         change_pct = round((change / prev_price) * 100, 2) if prev_price else 0
 
@@ -1486,13 +1765,128 @@ def stock_history_api(request):
             'labels': labels,
             'prices': prices,
             'current_price': current_price,
+            'previous_close': prev_price,
             'change': change,
             'change_pct': change_pct,
-            'symbol': symbol,
-            'exchange': 'NSE' if '.NS' in symbol else 'BSE' if '.BO' in symbol else 'Other'
+            'symbol': symbol_ns,
+            'period': period
         }
         
         cache.set(cache_key, result, 300)
         return JsonResponse(result)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required
+def watchlist(request):
+    """View to display the user's personal watchlist."""
+    from core.models import Watchlist, Portfolio
+    from .utils import fetch_live_ltp
+    
+    watchlist_items = Watchlist.objects.filter(user=request.user).select_related('instrument')
+    # Get portfolio data to support actions
+    portfolio_data = {p.instrument_id: {'qty': p.quantity, 'invested': float(p.invested_amount or 0)} 
+                      for p in Portfolio.objects.filter(user=request.user)}
+    
+    live_ltps = fetch_live_ltp() or {}
+    results = []
+    for item in watchlist_items:
+        inst = item.instrument
+        if not inst:
+            continue
+            
+        ltp = float(live_ltps.get(inst.symbol.upper(), 0))
+        if ltp <= 0:
+            ltp = float(inst.last_price or 0)
+            
+        change = float(inst.price_change or 0)
+        prev_close = ltp - change
+        change_pct = (change / prev_close * 100) if prev_close > 0 else 0
+        
+        p_data = portfolio_data.get(inst.id, {'qty': 0, 'invested': 0})
+        
+        results.append({
+            'symbol': inst.symbol,
+            'name': inst.name,
+            'ltp': ltp,
+            'change': change,
+            'change_pct': change_pct,
+            'notes': item.notes,
+            'added_at': item.added_at,
+            'instrument_id': inst.id,
+            'portfolio_qty': p_data['qty'],
+            'invested_amount': p_data['invested']
+        })
+        
+    return render(request, 'core/watchlist.html', {'watchlist': results})
+
+@csrf_exempt
+@login_required
+def add_to_watchlist_api(request):
+    """API to add a symbol to the user's watchlist."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+    
+    symbol = request.POST.get('symbol', '').strip().upper()
+    if not symbol:
+        return JsonResponse({'status': 'error', 'message': 'Symbol is required'}, status=400)
+    
+    from .models import Instrument, Watchlist
+    import yfinance as yf
+    
+    # Try to find the instrument
+    instrument = Instrument.objects.filter(symbol__iexact=symbol).first()
+    
+    if not instrument:
+        # Try to find exactly as provided or with .NS
+        search_symbol = symbol if '.' in symbol else f"{symbol}.NS"
+        try:
+            ticker = yf.Ticker(search_symbol)
+            info = ticker.info
+            if info and 'symbol' in info and info.get('symbol'):
+                fetched_symbol = str(info.get('symbol')).upper()
+                instrument, _ = Instrument.objects.get_or_create(
+                    symbol=fetched_symbol,
+                    defaults={
+                        'name': info.get('longName') or info.get('shortName') or symbol,
+                        'last_price': info.get('regularMarketPrice') or info.get('previousClose') or 0,
+                        'is_verified': True
+                    }
+                )
+            else:
+                return JsonResponse({'status': 'error', 'message': f'Symbol {symbol} not found in market'}, status=404)
+        except Exception as e:
+            import traceback
+            traceback.print_exc() # Log to server console
+            return JsonResponse({'status': 'error', 'message': f'Error fetching symbol: {str(e)}'}, status=500)
+
+    try:
+        Watchlist.objects.get_or_create(user=request.user, instrument=instrument)
+        return JsonResponse({'status': 'success', 'message': f'{symbol} added to watchlist'})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'status': 'error', 'message': f'Error saving to watchlist: {str(e)}'}, status=500)
+
+@csrf_exempt
+@login_required
+def remove_from_watchlist_api(request):
+    """API to remove a symbol from the user's watchlist."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST required'}, status=405)
+    
+    symbol = request.POST.get('symbol', '').strip().upper()
+    if not symbol:
+        return JsonResponse({'status': 'error', 'message': 'Symbol is required'}, status=400)
+    
+    from core.models import Instrument, Watchlist
+    instrument = Instrument.objects.filter(symbol__iexact=symbol).first()
+    
+    if instrument:
+        Watchlist.objects.filter(user=request.user, instrument=instrument).delete()
+        return JsonResponse({'status': 'success', 'message': f'{symbol} removed from watchlist'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Instrument not found'}, status=404)
+
