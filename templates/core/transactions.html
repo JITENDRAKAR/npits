@@ -336,7 +336,7 @@ function renderFYTable() {
                     <td class="fw-bold align-middle">${row.year}</td>
                     <td><input type="number" step="0.01" class="form-control form-control-sm text-end fy-invested" value="${invStr}" onchange="updateFYRow(this)" placeholder="0.00"></td>
                     <td><input type="number" step="0.01" class="form-control form-control-sm text-end fy-current" value="${curStr}" onchange="updateFYRow(this)" placeholder="0.00"></td>
-                    <td><input type="number" step="0.01" class="form-control form-control-sm text-end fy-unrealized" value="${unrlStr}" onchange="updateFYRow(this)" placeholder="0.00"></td>
+                    <td><input type="number" step="0.01" class="form-control form-control-sm text-end fy-unrealized fw-bold" value="${unrlStr}" readonly placeholder="0.00"></td>
                     <td><input type="number" step="0.01" class="form-control form-control-sm text-end fy-realized" value="${rlzStr}" onchange="updateFYRow(this)" placeholder="0.00"></td>
                     <td class="text-end fw-bold align-middle fy-return ${growthClass}">${growthStr}</td>
                     <td class="text-center align-middle">
@@ -350,9 +350,13 @@ function renderFYTable() {
                 </tr>`;
             }
         }
+        
+        // If it's an input row, ensure we trigger the P&L calculation for the row being rendered
+        // This is handled by updateFYRow(null) at the end of renderFYTable
     }
     
     tbody.innerHTML = html;
+    updateFYRow(null); // Initial calculation for all rows after render
     
     if (count > 0) {
         document.getElementById('fySaveAction').style.setProperty('display', 'flex', 'important');
@@ -367,6 +371,22 @@ function updateFYRow(input) {
     
     for (let i = 0; i < trs.length; i++) {
         let currentTr = trs[i];
+
+        // Automate Unrealized P&L calculation for input rows
+        if (currentTr.classList.contains('fy-input-row')) {
+            const invInput = currentTr.querySelector('.fy-invested');
+            const curInput = currentTr.querySelector('.fy-current');
+            const unrlInput = currentTr.querySelector('.fy-unrealized');
+            if (invInput && curInput && unrlInput) {
+                const invested = parseFloat(invInput.value) || 0;
+                const current = parseFloat(curInput.value) || 0;
+                const unrealized = current - invested;
+                unrlInput.value = unrealized.toFixed(2);
+                unrlInput.classList.remove('text-success', 'text-danger');
+                unrlInput.classList.add(unrealized >= 0 ? 'text-success' : 'text-danger');
+            }
+        }
+
         let returnCell = currentTr.querySelector('.fy-return');
         if (!returnCell) continue;
         

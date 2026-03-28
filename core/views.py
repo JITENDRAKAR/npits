@@ -1174,7 +1174,9 @@ def sell_stock(request):
         return redirect('dashboard')
 def get_current_financial_year():
     now = timezone.now().date()
-    if now.month >= 4:
+    # Standard Indian Financial Year starts April 1.
+    # User requested transition to 2026-2027 starting March 27, 2026.
+    if now.month >= 4 or (now.year == 2026 and now.month == 3 and now.day >= 27):
         return f"{now.year}-{now.year+1}"
     else:
         return f"{now.year-1}-{now.year}"
